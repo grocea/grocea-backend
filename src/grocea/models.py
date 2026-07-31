@@ -220,6 +220,119 @@ class StockChange(Base):
     after: Mapped[Decimal] = mapped_column(Numeric(15, 3), nullable=False)
 
 
+class BasketItem(TimestampMixin, Base):
+    __tablename__ = "basket_items"
+    __table_args__ = (
+        CheckConstraint("servings BETWEEN 1 AND 12", name="servings"),
+        UniqueConstraint("user_id", "recipe_id", name="uq_basket_items_user_recipe"),
+        UniqueConstraint("user_id", "position", name="uq_basket_items_user_position"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    recipe_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("recipes.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    servings: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class GroceryList(TimestampMixin, Base):
+    __tablename__ = "grocery_lists"
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'completed')", name="status"),
+        Index(
+            "uq_grocery_lists_user_active",
+            "user_id",
+            unique=True,
+            postgresql_where=text("status = 'active'"),
+        ),
+        Index("ix_grocery_lists_user_created", "user_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="active")
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class GroceryListRecipe(Base):
+    __tablename__ = "grocery_list_recipes"
+    __table_args__ = (
+        CheckConstraint("servings BETWEEN 1 AND 12", name="servings"),
+        UniqueConstraint("grocery_list_id", "recipe_snapshot_id", name="uq_grocery_list_recipes_list_recipe"),
+        UniqueConstraint("grocery_list_id", "position", name="uq_grocery_list_recipes_list_position"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    grocery_list_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("grocery_lists.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    recipe_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("recipes.id", ondelete="SET NULL"), nullable=True
+    )
+    recipe_snapshot_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    recipe_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    servings: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    base_servings: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+
+
+class GroceryListItem(TimestampMixin, Base):
+    __tablename__ = "grocery_list_items"
+    __table_args__ = (
+        CheckConstraint("origin IN ('generated', 'manual')", name="origin"),
+        CheckConstraint(
+            "measurement_family IS NULL OR measurement_family IN ('mass', 'volume', 'count')",
+            name="family",
+        ),
+        CheckConstraint("quantity IS NULL OR quantity > 0", name="positive_quantity"),
+        Index("ix_grocery_list_items_list", "grocery_list_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    grocery_list_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("grocery_lists.id", ondelete="CASCADE"), nullable=False
+    )
+    ingredient_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("ingredients.id", ondelete="SET NULL"), nullable=True
+    )
+    original_ingredient_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=True)
+    label: Mapped[str] = mapped_column(String(120), nullable=False)
+    category_name: Mapped[str] = mapped_column(String(120), nullable=False, server_default="Other")
+    measurement_family: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    quantity: Mapped[Decimal | None] = mapped_column(Numeric(15, 3), nullable=True)
+    unit: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    checked: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    origin: Mapped[str] = mapped_column(String(16), nullable=False)
+    edited: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    original_required: Mapped[Decimal | None] = mapped_column(Numeric(15, 3), nullable=True)
+    original_pantry: Mapped[Decimal | None] = mapped_column(Numeric(15, 3), nullable=True)
+    original_quantity: Mapped[Decimal | None] = mapped_column(Numeric(15, 3), nullable=True)
+
+
+class GroceryListItemSource(Base):
+    __tablename__ = "grocery_list_item_sources"
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    grocery_list_item_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("grocery_list_items.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    recipe_snapshot_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    recipe_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    servings: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(15, 3), nullable=False)
+    unit: Mapped[str] = mapped_column(String(8), nullable=False)
+
+
 class ProcessedMutation(Base):
     __tablename__ = "processed_mutations"
     __table_args__ = (UniqueConstraint("device_id", "mutation_id", name="uq_processed_mutations_device_mutation"),)

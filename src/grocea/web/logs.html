@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#254f3a">
+    <title>API Logs · Grocea</title>
+    <link rel="stylesheet" href="/developer-assets/developer.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#log-list">Skip to logs</a>
+    <header class="site-header">
+      <a class="wordmark" href="/">Grocea API</a>
+      <span>Developer console</span>
+    </header>
+    <main class="logs-shell">
+      <section class="logs-heading" aria-labelledby="logs-title">
+        <div>
+          <p class="eyebrow">Developer tools</p>
+          <h1 id="logs-title">API Logs</h1>
+        </div>
+        <output id="connection-status" class="connection-status" aria-live="polite">Connecting</output>
+      </section>
+
+      <section class="toolbar" aria-label="Log controls">
+        <button id="pause-button" class="button primary compact" type="button">Pause</button>
+        <label>
+          <span>Minimum severity</span>
+          <select id="severity-filter">
+            <option value="0">All levels</option>
+            <option value="20">Info+</option>
+            <option value="30">Warning+</option>
+            <option value="40">Error+</option>
+            <option value="50">Critical</option>
+          </select>
+        </label>
+        <label class="search-control">
+          <span>Search logs</span>
+          <input id="search-filter" type="search" placeholder="Path, message, request ID…" autocomplete="off">
+        </label>
+      </section>
+
+      <div class="log-summary">
+        <p id="log-summary" aria-live="polite">Waiting for logs…</p>
+        <p id="refresh-time"></p>
+      </div>
+      <p id="feed-error" class="feed-error" role="alert" hidden></p>
+      <p id="empty-state" class="empty-state">No matching log entries.</p>
+      <ol id="log-list" class="log-list" aria-label="API log entries"></ol>
+    </main>
+    <script type="module" src="/developer-assets/logs.js"></script>
+  </body>
+</html>

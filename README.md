@@ -28,8 +28,18 @@ uv run uvicorn grocea.main:app --reload --host 127.0.0.1
 ```
 
 - API docs: <http://127.0.0.1:8000/api/docs>
+- Developer landing: <http://127.0.0.1:8000/>
+- API logs: <http://127.0.0.1:8000/logs>
 - OpenAPI: <http://127.0.0.1:8000/api/openapi.json>
 - Readiness: <http://127.0.0.1:8000/api/health/ready>
+
+The developer log console polls a process-local ring buffer every two seconds.
+It retains the latest 500 entries by default and clears whenever the process
+restarts. Set `API_LOG_CAPACITY` to a value from 1 to 10,000 to tune the limit.
+The console records product API request metadata and Grocea warnings and errors;
+it never records query values, headers, cookies, request bodies, or response
+bodies. Developer pages, documentation, the log feed, and health checks are
+excluded from request history.
 
 ## Developer commands
 
@@ -56,7 +66,8 @@ Integration tests use `TEST_DATABASE_URL` and refuse databases not named
 
 All application routes live under `/api`. The API always resolves requests to
 the stable seeded Local Profile; there is no Phase 0 authentication. Never bind
-this server publicly.
+this server publicly. The unauthenticated developer landing, documentation, and
+log console are subject to the same restriction.
 
 The committed `openapi/openapi.json` file is the handoff contract for the PWA.
 Regenerate it after intentional API changes.

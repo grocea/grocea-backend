@@ -10,7 +10,12 @@ from sqlalchemy.orm import Session
 from grocea.errors import DomainError
 from grocea.models import (
     ActivityEvent,
+    BasketItem,
     Category,
+    GroceryList,
+    GroceryListItem,
+    GroceryListItemSource,
+    GroceryListRecipe,
     Ingredient,
     PantryStock,
     Recipe,
@@ -22,10 +27,24 @@ from grocea.models import (
 from grocea.normalization import normalize_name
 from grocea.schemas import (
     ActivityResponse,
+    BasketItemResponse,
+    BasketItemUpsert,
+    BasketResponse,
     CookRecipeCreate,
+    GroceryListComplete,
+    GroceryListCreate,
+    GroceryListItemCreate,
+    GroceryListItemResponse,
+    GroceryListItemSourceResponse,
+    GroceryListItemUpdate,
+    GroceryListRecipeResponse,
+    GroceryListResponse,
+    GroceryListStatus,
+    GroceryListUpdate,
     ImportConflict,
     LocalImportRequest,
     LocalImportResponse,
+    MeasurementFamily,
     PantryStockResponse,
     RecipeCreate,
     RecipeIngredientResponse,
@@ -69,6 +88,13 @@ def _parse_quantity(raw: str, unit: Unit) -> Decimal | None:
         return None
     value = value.quantize(THREE_PLACES, rounding=ROUND_HALF_UP)
     return value if value > 0 else None
+
+
+def _imported_minor_quantity(item: dict[str, object], key: str) -> Decimal | None:
+    value = item.get(key)
+    if not isinstance(value, str):
+        return None
+    return (Decimal(value) / Decimal(1000)).quantize(THREE_PLACES, rounding=ROUND_HALF_UP)
 
 
 def pantry_response(stock: PantryStock) -> PantryStockResponse:
@@ -155,6 +181,624 @@ def list_activity(session: Session, user: User) -> list[ActivityResponse]:
     return [activity_response(session, row) for row in rows]
 
 
+def basket_response(session: Session, user: User) -> BasketResponse:
+    rows = session.execute(
+        select(BasketItem, Recipe)
+        .join(Recipe, Recipe.id == BasketItem.recipe_id)
+        .where(BasketItem.user_id == user.id)
+        .order_by(BasketItem.position)
+    ).all()
+    return BasketResponse(
+        items=[
+            BasketItemResponse(
+                recipe_id=recipe.id,
+                recipe_name=recipe.name,
+                servings=item.servings,
+                base_servings=recipe.base_servings,
+                valid=recipe.status == RecipeStatus.PUBLISHED and recipe.archived_at is None,
+                error=(
+                    None
+                    if recipe.status == RecipeStatus.PUBLISHED and recipe.archived_at is None
+                    else "Recipe is no longer published."
+                ),
+            )
+            for item, recipe in rows
+        ]
+    )
+
+
+def upsert_basket_item(
+    session: Session,
+    user: User,
+    recipe_id: UUID,
+    payload: BasketItemUpsert,
+) -> BasketResponse:
+    recipe = get_recipe_model(session, user, recipe_id)
+    if recipe.status != RecipeStatus.PUBLISHED:
+        raise DomainError(409, "RECIPE_NOT_PUBLISHED", "Only Published Recipes can be added to Basket.")
+    item = session.scalar(select(BasketItem).where(BasketItem.user_id == user.id, BasketItem.recipe_id == recipe_id))
+    if item is None:
+        positions = session.scalars(select(BasketItem.position).where(BasketItem.user_id == user.id)).all()
+        session.add(
+            BasketItem(
+                user_id=user.id,
+                recipe_id=recipe_id,
+                servings=payload.servings,
+                position=max(positions, default=-1) + 1,
+            )
+        )
+    else:
+        item.servings = payload.servings
+    session.flush()
+    return basket_response(session, user)
+
+
+def remove_basket_item(session: Session, user: User, recipe_id: UUID) -> BasketResponse:
+    session.execute(delete(BasketItem).where(BasketItem.user_id == user.id, BasketItem.recipe_id == recipe_id))
+    session.flush()
+    return basket_response(session, user)
+
+
+def clear_basket(session: Session, user: User) -> BasketResponse:
+    session.execute(delete(BasketItem).where(BasketItem.user_id == user.id))
+    session.flush()
+    return basket_response(session, user)
+
+
+def grocery_list_response(session: Session, grocery_list: GroceryList) -> GroceryListResponse:
+    recipes = session.scalars(
+        select(GroceryListRecipe)
+        .where(GroceryListRecipe.grocery_list_id == grocery_list.id)
+        .order_by(GroceryListRecipe.position)
+    ).all()
+    items = session.scalars(
+        select(GroceryListItem)
+        .where(GroceryListItem.grocery_list_id == grocery_list.id)
+        .order_by(GroceryListItem.category_name, GroceryListItem.checked, GroceryListItem.label, GroceryListItem.id)
+    ).all()
+    item_responses: list[GroceryListItemResponse] = []
+    for item in items:
+        sources = session.scalars(
+            select(GroceryListItemSource)
+            .where(GroceryListItemSource.grocery_list_item_id == item.id)
+            .order_by(GroceryListItemSource.recipe_name, GroceryListItemSource.id)
+        ).all()
+        item_responses.append(
+            GroceryListItemResponse(
+                id=item.id,
+                ingredient_id=item.ingredient_id,
+                label=item.label,
+                category_name=item.category_name,
+                measurement_family=(
+                    MeasurementFamily(item.measurement_family) if item.measurement_family is not None else None
+                ),
+                quantity=item.quantity,
+                unit=item.unit,
+                checked=item.checked,
+                origin=item.origin,  # type: ignore[arg-type]
+                edited=item.edited,
+                original_required=item.original_required,
+                original_pantry=item.original_pantry,
+                original_quantity=item.original_quantity,
+                sources=[
+                    GroceryListItemSourceResponse(
+                        recipe_id=source.recipe_snapshot_id,
+                        recipe_name=source.recipe_name,
+                        servings=source.servings,
+                        quantity=source.quantity,
+                        unit=Unit(source.unit),
+                    )
+                    for source in sources
+                ],
+                created_at=item.created_at,
+                updated_at=item.updated_at,
+            )
+        )
+    return GroceryListResponse(
+        id=grocery_list.id,
+        title=grocery_list.title,
+        status=GroceryListStatus(grocery_list.status),
+        recipes=[
+            GroceryListRecipeResponse(
+                recipe_id=recipe.recipe_snapshot_id,
+                recipe_name=recipe.recipe_name,
+                servings=recipe.servings,
+                base_servings=recipe.base_servings,
+            )
+            for recipe in recipes
+        ],
+        items=item_responses,
+        created_at=grocery_list.created_at,
+        updated_at=grocery_list.updated_at,
+        completed_at=grocery_list.completed_at,
+    )
+
+
+def list_grocery_lists(session: Session, user: User) -> list[GroceryListResponse]:
+    rows = session.scalars(
+        select(GroceryList)
+        .where(GroceryList.user_id == user.id)
+        .order_by(GroceryList.created_at.desc(), GroceryList.id.desc())
+    ).all()
+    return [grocery_list_response(session, row) for row in rows]
+
+
+def create_grocery_list_from_basket(
+    session: Session,
+    user: User,
+    payload: GroceryListCreate,
+) -> GroceryListResponse:
+    if session.get(GroceryList, payload.id) is not None:
+        raise DomainError(409, "GROCERY_LIST_ID_EXISTS", "Grocery List ID already exists.")
+    active = session.scalar(
+        select(GroceryList).where(GroceryList.user_id == user.id, GroceryList.status == GroceryListStatus.ACTIVE)
+    )
+    if active is not None:
+        raise DomainError(409, "ACTIVE_GROCERY_LIST_EXISTS", "Complete or delete the active Grocery List first.")
+    basket_rows = session.execute(
+        select(BasketItem, Recipe)
+        .join(Recipe, Recipe.id == BasketItem.recipe_id)
+        .where(BasketItem.user_id == user.id)
+        .order_by(BasketItem.position)
+    ).all()
+    if not basket_rows:
+        raise DomainError(409, "BASKET_EMPTY", "Add at least one Recipe to Basket first.")
+    invalid = [
+        recipe.name for _, recipe in basket_rows if recipe.status != RecipeStatus.PUBLISHED or recipe.archived_at
+    ]
+    if invalid:
+        raise DomainError(
+            409,
+            "BASKET_RECIPE_INVALID",
+            "Basket contains Recipes that are no longer published.",
+            {"recipes": invalid},
+        )
+
+    if payload.recipe_basis:
+        expected_recipes = {item.recipe_id: item for item in payload.recipe_basis}
+        if set(expected_recipes) != {recipe.id for _, recipe in basket_rows}:
+            raise DomainError(409, "GROCERY_CALCULATION_STALE", "Basket Recipes changed. Review fresh totals.")
+        for _, recipe in basket_rows:
+            basis = expected_recipes[recipe.id]
+            requirements = session.scalars(
+                select(RecipeIngredient)
+                .where(RecipeIngredient.recipe_id == recipe.id)
+                .order_by(RecipeIngredient.position)
+            ).all()
+            actual = {item.ingredient_id: item.quantity for item in requirements}
+            expected = {
+                item.ingredient_id: item.quantity.quantize(THREE_PLACES, rounding=ROUND_HALF_UP)
+                for item in basis.ingredients
+            }
+            if basis.base_servings != recipe.base_servings or actual != expected:
+                raise DomainError(409, "GROCERY_CALCULATION_STALE", "Recipe requirements changed. Review fresh totals.")
+
+    first_name = basket_rows[0][1].name
+    default_title = f"Groceries — {first_name}" + (f" + {len(basket_rows) - 1}" if len(basket_rows) > 1 else "")
+    grocery_list = GroceryList(
+        id=payload.id,
+        user_id=user.id,
+        title=payload.title or default_title,
+        status=GroceryListStatus.ACTIVE,
+    )
+    session.add(grocery_list)
+    session.flush()
+
+    aggregates: dict[UUID, dict[str, object]] = {}
+    for position, (basket_item, recipe) in enumerate(basket_rows):
+        session.add(
+            GroceryListRecipe(
+                grocery_list_id=grocery_list.id,
+                recipe_id=recipe.id,
+                recipe_snapshot_id=recipe.id,
+                recipe_name=recipe.name,
+                position=position,
+                servings=basket_item.servings,
+                base_servings=recipe.base_servings,
+            )
+        )
+        requirements = session.scalars(
+            select(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe.id).order_by(RecipeIngredient.position)
+        ).all()
+        for requirement in requirements:
+            if requirement.quantity is None:
+                raise DomainError(409, "BASKET_RECIPE_INVALID", "Published Recipe has an invalid quantity.")
+            contribution = (
+                requirement.quantity * Decimal(basket_item.servings) / Decimal(recipe.base_servings)
+            ).quantize(THREE_PLACES, rounding=ROUND_HALF_UP)
+            aggregate = aggregates.setdefault(
+                requirement.ingredient_id,
+                {"required": Decimal("0.000"), "sources": []},
+            )
+            aggregate["required"] = aggregate["required"] + contribution  # type: ignore[operator]
+            sources = aggregate["sources"]
+            assert isinstance(sources, list)
+            sources.append((recipe, basket_item.servings, contribution))
+
+    pantry = {
+        row.ingredient_id: row.quantity
+        for row in session.scalars(select(PantryStock).where(PantryStock.user_id == user.id))
+    }
+    if payload.pantry_basis:
+        expected_pantry = {
+            item.ingredient_id: item.quantity.quantize(THREE_PLACES, rounding=ROUND_HALF_UP)
+            for item in payload.pantry_basis
+        }
+        actual_pantry = {ingredient_id: pantry.get(ingredient_id, Decimal("0.000")) for ingredient_id in aggregates}
+        if expected_pantry != actual_pantry:
+            raise DomainError(409, "GROCERY_CALCULATION_STALE", "Pantry Stock changed. Review fresh totals.")
+    generated_item_ids = {item.ingredient_id: item.id for item in payload.generated_item_ids}
+    for ingredient_id, aggregate in aggregates.items():
+        ingredient = session.get(Ingredient, ingredient_id)
+        assert ingredient is not None
+        category = session.get(Category, ingredient.category_id)
+        assert category is not None
+        required = aggregate["required"]
+        assert isinstance(required, Decimal)
+        pantry_quantity = pantry.get(ingredient_id, Decimal("0.000"))
+        purchase = (required - pantry_quantity).quantize(THREE_PLACES, rounding=ROUND_HALF_UP)
+        if purchase <= 0:
+            continue
+        canonical_unit = {"mass": "g", "volume": "ml", "count": "item"}[ingredient.measurement_family]
+        grocery_item = GroceryListItem(
+            id=generated_item_ids.get(ingredient.id, uuid4()),
+            grocery_list_id=grocery_list.id,
+            ingredient_id=ingredient.id,
+            original_ingredient_id=ingredient.id,
+            label=ingredient.name,
+            category_name=category.name,
+            measurement_family=ingredient.measurement_family,
+            quantity=purchase,
+            unit=canonical_unit,
+            checked=False,
+            origin="generated",
+            edited=False,
+            original_required=required,
+            original_pantry=pantry_quantity,
+            original_quantity=purchase,
+        )
+        session.add(grocery_item)
+        session.flush()
+        sources = aggregate["sources"]
+        assert isinstance(sources, list)
+        for recipe, servings, contribution in sources:
+            session.add(
+                GroceryListItemSource(
+                    grocery_list_item_id=grocery_item.id,
+                    recipe_snapshot_id=recipe.id,
+                    recipe_name=recipe.name,
+                    servings=servings,
+                    quantity=contribution,
+                    unit=canonical_unit,
+                )
+            )
+
+    session.flush()
+    has_items = session.scalar(
+        select(GroceryListItem.id).where(GroceryListItem.grocery_list_id == grocery_list.id).limit(1)
+    )
+    if has_items is None:
+        grocery_list.status = GroceryListStatus.COMPLETED
+        grocery_list.completed_at = datetime.now(UTC)
+    session.execute(delete(BasketItem).where(BasketItem.user_id == user.id))
+    session.flush()
+    return grocery_list_response(session, grocery_list)
+
+
+def get_grocery_list_model(session: Session, user: User, grocery_list_id: UUID) -> GroceryList:
+    grocery_list = session.scalar(
+        select(GroceryList).where(GroceryList.id == grocery_list_id, GroceryList.user_id == user.id)
+    )
+    if grocery_list is None:
+        raise DomainError(404, "GROCERY_LIST_NOT_FOUND", "Grocery List was not found.")
+    return grocery_list
+
+
+def _require_active_grocery_list(session: Session, user: User, grocery_list_id: UUID) -> GroceryList:
+    grocery_list = get_grocery_list_model(session, user, grocery_list_id)
+    if grocery_list.status != GroceryListStatus.ACTIVE:
+        raise DomainError(409, "GROCERY_LIST_COMPLETED", "Completed Grocery Lists are read-only.")
+    return grocery_list
+
+
+def _grocery_item_values(
+    session: Session,
+    user: User,
+    *,
+    ingredient_id: UUID | None,
+    label: str,
+    quantity: Decimal | None,
+    unit: str | None,
+) -> tuple[UUID | None, str, str, str | None, Decimal | None, str | None]:
+    if ingredient_id is None:
+        custom_quantity = quantity.quantize(THREE_PLACES, rounding=ROUND_HALF_UP) if quantity is not None else None
+        return None, label.strip(), "Other", None, custom_quantity, unit.strip() if unit is not None else None
+    ingredient = session.scalar(
+        select(Ingredient).where(
+            Ingredient.id == ingredient_id,
+            or_(Ingredient.user_id.is_(None), Ingredient.user_id == user.id),
+            Ingredient.archived_at.is_(None),
+        )
+    )
+    if ingredient is None:
+        raise DomainError(404, "INGREDIENT_NOT_FOUND", "Grocery List Ingredient was not found.")
+    category = session.get(Category, ingredient.category_id)
+    assert category is not None
+    canonical_unit = {"mass": Unit.G, "volume": Unit.ML, "count": Unit.ITEM}[ingredient.measurement_family]
+    normalized_quantity: Decimal | None = None
+    if quantity is not None and unit is not None:
+        try:
+            parsed_unit = Unit(unit.strip())
+        except ValueError as exc:
+            raise DomainError(422, "UNIT_INVALID", "Catalog Ingredient requires a supported metric unit.") from exc
+        if parsed_unit not in FAMILY_UNITS[ingredient.measurement_family]:
+            raise DomainError(422, "UNIT_FAMILY_MISMATCH", "Grocery unit does not match Ingredient family.")
+        normalized_quantity = (quantity * UNIT_FACTORS[parsed_unit]).quantize(THREE_PLACES, rounding=ROUND_HALF_UP)
+    return (
+        ingredient.id,
+        ingredient.name,
+        category.name,
+        ingredient.measurement_family,
+        normalized_quantity,
+        canonical_unit.value if normalized_quantity is not None else None,
+    )
+
+
+def create_grocery_list_item(
+    session: Session,
+    user: User,
+    grocery_list_id: UUID,
+    payload: GroceryListItemCreate,
+) -> GroceryListResponse:
+    grocery_list = _require_active_grocery_list(session, user, grocery_list_id)
+    if session.get(GroceryListItem, payload.id) is not None:
+        raise DomainError(409, "GROCERY_LIST_ITEM_ID_EXISTS", "Grocery List Item ID already exists.")
+    ingredient_id, label, category, family, quantity, unit = _grocery_item_values(
+        session,
+        user,
+        ingredient_id=payload.ingredient_id,
+        label=payload.label,
+        quantity=payload.quantity,
+        unit=payload.unit,
+    )
+    session.add(
+        GroceryListItem(
+            id=payload.id,
+            grocery_list_id=grocery_list.id,
+            ingredient_id=ingredient_id,
+            label=label,
+            category_name=category,
+            measurement_family=family,
+            quantity=quantity,
+            unit=unit,
+            checked=False,
+            origin="manual",
+            edited=False,
+        )
+    )
+    session.flush()
+    return grocery_list_response(session, grocery_list)
+
+
+def update_grocery_list_item(
+    session: Session,
+    user: User,
+    grocery_list_id: UUID,
+    grocery_item_id: UUID,
+    payload: GroceryListItemUpdate,
+) -> GroceryListResponse:
+    grocery_list = _require_active_grocery_list(session, user, grocery_list_id)
+    item = session.scalar(
+        select(GroceryListItem).where(
+            GroceryListItem.id == grocery_item_id,
+            GroceryListItem.grocery_list_id == grocery_list.id,
+        )
+    )
+    if item is None:
+        raise DomainError(404, "GROCERY_LIST_ITEM_NOT_FOUND", "Grocery List Item was not found.")
+    ingredient_id, label, category, family, quantity, unit = _grocery_item_values(
+        session,
+        user,
+        ingredient_id=payload.ingredient_id,
+        label=payload.label,
+        quantity=payload.quantity,
+        unit=payload.unit,
+    )
+    changed = (
+        item.ingredient_id != ingredient_id or item.label != label or item.quantity != quantity or item.unit != unit
+    )
+    item.ingredient_id = ingredient_id
+    item.label = label
+    item.category_name = category
+    item.measurement_family = family
+    item.quantity = quantity
+    item.unit = unit
+    item.checked = payload.checked
+    item.edited = item.edited or changed
+    session.flush()
+    return grocery_list_response(session, grocery_list)
+
+
+def complete_grocery_list(
+    session: Session,
+    user: User,
+    grocery_list_id: UUID,
+    payload: GroceryListComplete,
+) -> GroceryListResponse:
+    grocery_list = _require_active_grocery_list(session, user, grocery_list_id)
+    if len(set(payload.pantry_item_ids)) != len(payload.pantry_item_ids):
+        raise DomainError(422, "DUPLICATE_PANTRY_ITEM", "Pantry update Items must be unique.")
+    selected = session.scalars(
+        select(GroceryListItem).where(
+            GroceryListItem.grocery_list_id == grocery_list.id,
+            GroceryListItem.id.in_(payload.pantry_item_ids),
+        )
+    ).all()
+    if len(selected) != len(payload.pantry_item_ids):
+        raise DomainError(422, "PANTRY_ITEM_INVALID", "Selected pantry update Item was not found in this list.")
+    if any(not item.checked or item.ingredient_id is None or item.quantity is None for item in selected):
+        raise DomainError(
+            422,
+            "PANTRY_ITEM_INELIGIBLE",
+            "Pantry updates require checked catalog Items with quantities.",
+        )
+    pantry_additions: dict[UUID, Decimal] = {}
+    for item in selected:
+        assert item.ingredient_id is not None and item.quantity is not None
+        pantry_additions[item.ingredient_id] = (
+            pantry_additions.get(item.ingredient_id, Decimal("0.000")) + item.quantity
+        )
+
+    event: ActivityEvent | None = None
+    if selected:
+        if session.get(ActivityEvent, payload.event_id) is not None:
+            raise DomainError(409, "ACTIVITY_ID_EXISTS", "Activity Event ID already exists.")
+        event = ActivityEvent(
+            id=payload.event_id,
+            user_id=user.id,
+            event_type="manual",
+            title="Groceries added to pantry",
+            detail=f"{len(selected)} purchased item{'s' if len(selected) != 1 else ''}",
+        )
+        session.add(event)
+        session.flush()
+    for ingredient_id, quantity in pantry_additions.items():
+        assert event is not None
+        stock = session.scalar(
+            select(PantryStock)
+            .where(PantryStock.user_id == user.id, PantryStock.ingredient_id == ingredient_id)
+            .with_for_update()
+        )
+        if stock is None:
+            stock = PantryStock(user_id=user.id, ingredient_id=ingredient_id, quantity=Decimal("0.000"))
+            session.add(stock)
+            session.flush()
+        before = stock.quantity
+        stock.quantity = (before + quantity).quantize(THREE_PLACES, rounding=ROUND_HALF_UP)
+        session.add(
+            StockChange(
+                event_id=event.id,
+                ingredient_id=ingredient_id,
+                before=before,
+                delta=quantity,
+                after=stock.quantity,
+            )
+        )
+    grocery_list.status = GroceryListStatus.COMPLETED
+    grocery_list.completed_at = datetime.now(UTC)
+    session.flush()
+    return grocery_list_response(session, grocery_list)
+
+
+def update_grocery_list(
+    session: Session,
+    user: User,
+    grocery_list_id: UUID,
+    payload: GroceryListUpdate,
+) -> GroceryListResponse:
+    grocery_list = _require_active_grocery_list(session, user, grocery_list_id)
+    grocery_list.title = payload.title
+    session.flush()
+    return grocery_list_response(session, grocery_list)
+
+
+def remove_grocery_list_item(
+    session: Session,
+    user: User,
+    grocery_list_id: UUID,
+    grocery_item_id: UUID,
+) -> GroceryListResponse:
+    grocery_list = _require_active_grocery_list(session, user, grocery_list_id)
+    item = session.scalar(
+        select(GroceryListItem).where(
+            GroceryListItem.id == grocery_item_id,
+            GroceryListItem.grocery_list_id == grocery_list.id,
+        )
+    )
+    if item is None:
+        raise DomainError(404, "GROCERY_LIST_ITEM_NOT_FOUND", "Grocery List Item was not found.")
+    session.delete(item)
+    session.flush()
+    return grocery_list_response(session, grocery_list)
+
+
+def _restore_grocery_list_recipes_to_basket(
+    session: Session,
+    user: User,
+    grocery_list: GroceryList,
+) -> None:
+    sources = session.scalars(
+        select(GroceryListRecipe)
+        .where(GroceryListRecipe.grocery_list_id == grocery_list.id)
+        .order_by(GroceryListRecipe.position)
+    ).all()
+    recipes: dict[UUID, Recipe] = {}
+    invalid: list[str] = []
+    for source in sources:
+        recipe = session.scalar(
+            select(Recipe).where(
+                Recipe.id == source.recipe_snapshot_id,
+                or_(Recipe.user_id.is_(None), Recipe.user_id == user.id),
+                Recipe.status == RecipeStatus.PUBLISHED,
+                Recipe.archived_at.is_(None),
+            )
+        )
+        if recipe is None:
+            invalid.append(source.recipe_name)
+        else:
+            recipes[source.recipe_snapshot_id] = recipe
+    if invalid:
+        raise DomainError(
+            409,
+            "GROCERY_LIST_RECIPE_INVALID",
+            "Source Recipes are no longer available.",
+            {"recipes": invalid},
+        )
+    existing_rows = session.scalars(select(BasketItem).where(BasketItem.user_id == user.id)).all()
+    existing = {item.recipe_id for item in existing_rows}
+    next_position = max((item.position for item in existing_rows), default=-1) + 1
+    for source in sources:
+        if source.recipe_snapshot_id not in existing:
+            session.add(
+                BasketItem(
+                    user_id=user.id,
+                    recipe_id=recipes[source.recipe_snapshot_id].id,
+                    servings=source.servings,
+                    position=next_position,
+                )
+            )
+            existing.add(source.recipe_snapshot_id)
+            next_position += 1
+    session.flush()
+
+
+def reuse_grocery_list_recipes(
+    session: Session,
+    user: User,
+    grocery_list_id: UUID,
+) -> BasketResponse:
+    grocery_list = get_grocery_list_model(session, user, grocery_list_id)
+    if grocery_list.status != GroceryListStatus.COMPLETED:
+        raise DomainError(409, "GROCERY_LIST_ACTIVE", "Only completed Grocery Lists can be reused.")
+    _restore_grocery_list_recipes_to_basket(session, user, grocery_list)
+    return basket_response(session, user)
+
+
+def delete_grocery_list(
+    session: Session,
+    user: User,
+    grocery_list_id: UUID,
+    *,
+    restore_recipes: bool,
+) -> BasketResponse:
+    grocery_list = get_grocery_list_model(session, user, grocery_list_id)
+    if restore_recipes:
+        _restore_grocery_list_recipes_to_basket(session, user, grocery_list)
+    session.delete(grocery_list)
+    session.flush()
+    return basket_response(session, user)
+
+
 def state_response(session: Session, user: User) -> StateResponse:
     categories = session.scalars(
         select(Category)
@@ -177,6 +821,8 @@ def state_response(session: Session, user: User) -> StateResponse:
         pantry_stocks=list_pantry_stocks(session, user),
         recipes=list_recipes(session, user),
         activity=list_activity(session, user),
+        basket=basket_response(session, user),
+        grocery_lists=list_grocery_lists(session, user),
     )
 
 
@@ -430,6 +1076,8 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
     raw_balances = payload.state.get("balances", {})
     raw_recipes = payload.state.get("recipes", [])
     raw_activity = payload.state.get("activity", [])
+    raw_basket = payload.state.get("basket", [])
+    raw_grocery_lists = payload.state.get("groceryLists", [])
     id_map: dict[str, UUID] = {}
     conflicts: list[dict[str, str]] = []
     if isinstance(raw_categories, list):
@@ -708,6 +1356,248 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
                 original = event_models.get(raw["reversalOf"])
                 if current_event is not None and original is not None:
                     current_event.reversal_of = original.id
+
+    if isinstance(raw_basket, list):
+        existing_basket = session.scalars(select(BasketItem).where(BasketItem.user_id == user.id)).all()
+        if existing_basket and raw_basket:
+            conflicts.append(
+                {"kind": "basket", "local_id": str(user.id), "message": "Backend Basket already contains Recipes."}
+            )
+        elif not existing_basket:
+            for position, raw in enumerate(raw_basket):
+                if not isinstance(raw, dict) or not isinstance(raw.get("recipeId"), str):
+                    continue
+                recipe_id = id_map.get(raw["recipeId"])
+                servings = raw.get("servings")
+                imported_recipe = session.get(Recipe, recipe_id) if recipe_id is not None else None
+                if (
+                    imported_recipe is None
+                    or imported_recipe.status != RecipeStatus.PUBLISHED
+                    or not isinstance(servings, int)
+                    or not 1 <= servings <= 12
+                ):
+                    conflicts.append(
+                        {
+                            "kind": "basket",
+                            "local_id": raw["recipeId"],
+                            "message": "Basket Recipe cannot be mapped safely.",
+                        }
+                    )
+                    continue
+                session.add(
+                    BasketItem(
+                        user_id=user.id,
+                        recipe_id=imported_recipe.id,
+                        servings=servings,
+                        position=position,
+                    )
+                )
+    session.flush()
+
+    if isinstance(raw_grocery_lists, list):
+        existing_lists = session.scalars(select(GroceryList).where(GroceryList.user_id == user.id)).all()
+        if existing_lists and raw_grocery_lists:
+            conflicts.append(
+                {
+                    "kind": "grocery-list",
+                    "local_id": str(user.id),
+                    "message": "Backend already contains Grocery Lists.",
+                }
+            )
+        elif not existing_lists:
+            imported_active = False
+            for raw in raw_grocery_lists:
+                if not isinstance(raw, dict) or not isinstance(raw.get("id"), str):
+                    continue
+                local_list_id = raw["id"]
+                try:
+                    grocery_list_id = UUID(local_list_id)
+                except ValueError:
+                    grocery_list_id = uuid4()
+                status = raw.get("status")
+                title = raw.get("title")
+                if status not in {"active", "completed"} or not isinstance(title, str) or not title.strip():
+                    conflicts.append(
+                        {
+                            "kind": "grocery-list",
+                            "local_id": local_list_id,
+                            "message": "Grocery List metadata is invalid.",
+                        }
+                    )
+                    continue
+                if status == "active" and imported_active:
+                    conflicts.append(
+                        {
+                            "kind": "grocery-list",
+                            "local_id": local_list_id,
+                            "message": "Only one active Grocery List can be imported.",
+                        }
+                    )
+                    continue
+                created_at = (
+                    datetime.fromisoformat(raw["createdAt"])
+                    if isinstance(raw.get("createdAt"), str)
+                    else datetime.now(UTC)
+                )
+                updated_at = (
+                    datetime.fromisoformat(raw["updatedAt"]) if isinstance(raw.get("updatedAt"), str) else created_at
+                )
+                completed_at = (
+                    datetime.fromisoformat(raw["completedAt"]) if isinstance(raw.get("completedAt"), str) else None
+                )
+                grocery_list = GroceryList(
+                    id=grocery_list_id,
+                    user_id=user.id,
+                    title=title.strip(),
+                    status=status,
+                    created_at=created_at,
+                    updated_at=updated_at,
+                    completed_at=completed_at,
+                )
+                session.add(grocery_list)
+                session.flush()
+                id_map[local_list_id] = grocery_list.id
+                imported_active = imported_active or status == "active"
+
+                raw_sources = raw.get("recipes")
+                if isinstance(raw_sources, list):
+                    for position, source in enumerate(raw_sources):
+                        if not isinstance(source, dict) or not isinstance(source.get("recipeId"), str):
+                            continue
+                        mapped_recipe_id = id_map.get(source["recipeId"])
+                        servings = source.get("servings")
+                        base_servings = source.get("baseServings")
+                        name = source.get("recipeName")
+                        if (
+                            mapped_recipe_id is None
+                            or not isinstance(servings, int)
+                            or not 1 <= servings <= 12
+                            or not isinstance(base_servings, int)
+                            or not isinstance(name, str)
+                        ):
+                            conflicts.append(
+                                {
+                                    "kind": "grocery-list-recipe",
+                                    "local_id": source["recipeId"],
+                                    "message": "Grocery List source Recipe cannot be mapped safely.",
+                                }
+                            )
+                            continue
+                        session.add(
+                            GroceryListRecipe(
+                                grocery_list_id=grocery_list.id,
+                                recipe_id=mapped_recipe_id,
+                                recipe_snapshot_id=mapped_recipe_id,
+                                recipe_name=name,
+                                position=position,
+                                servings=servings,
+                                base_servings=base_servings,
+                            )
+                        )
+
+                raw_items = raw.get("items")
+                if isinstance(raw_items, list):
+                    for raw_item in raw_items:
+                        if not isinstance(raw_item, dict) or not isinstance(raw_item.get("id"), str):
+                            continue
+                        local_item_id = raw_item["id"]
+                        try:
+                            grocery_item_id = UUID(local_item_id)
+                        except ValueError:
+                            grocery_item_id = uuid4()
+                        local_ingredient_id = raw_item.get("ingredientId")
+                        ingredient_id = (
+                            id_map.get(local_ingredient_id) if isinstance(local_ingredient_id, str) else None
+                        )
+
+                        try:
+                            quantity = _imported_minor_quantity(raw_item, "quantity")
+                            original_required = _imported_minor_quantity(raw_item, "originalRequired")
+                            original_pantry = _imported_minor_quantity(raw_item, "originalPantry")
+                            original_quantity = _imported_minor_quantity(raw_item, "originalQuantity")
+                        except InvalidOperation:
+                            conflicts.append(
+                                {
+                                    "kind": "grocery-list-item",
+                                    "local_id": local_item_id,
+                                    "message": "Grocery List Item quantity is invalid.",
+                                }
+                            )
+                            continue
+                        label = raw_item.get("label")
+                        if not isinstance(label, str) or not label.strip():
+                            continue
+                        item = GroceryListItem(
+                            id=grocery_item_id,
+                            grocery_list_id=grocery_list.id,
+                            ingredient_id=ingredient_id,
+                            original_ingredient_id=ingredient_id if raw_item.get("origin") == "generated" else None,
+                            label=label.strip(),
+                            category_name=(
+                                raw_item["categoryName"] if isinstance(raw_item.get("categoryName"), str) else "Other"
+                            ),
+                            measurement_family=(
+                                raw_item["family"] if raw_item.get("family") in {"mass", "volume", "count"} else None
+                            ),
+                            quantity=quantity,
+                            unit=raw_item["unit"] if isinstance(raw_item.get("unit"), str) else None,
+                            checked=raw_item.get("checked") is True,
+                            origin=raw_item["origin"]
+                            if raw_item.get("origin") in {"generated", "manual"}
+                            else "manual",
+                            edited=raw_item.get("edited") is True,
+                            original_required=original_required,
+                            original_pantry=original_pantry,
+                            original_quantity=original_quantity,
+                            created_at=(
+                                datetime.fromisoformat(raw_item["createdAt"])
+                                if isinstance(raw_item.get("createdAt"), str)
+                                else created_at
+                            ),
+                            updated_at=(
+                                datetime.fromisoformat(raw_item["updatedAt"])
+                                if isinstance(raw_item.get("updatedAt"), str)
+                                else updated_at
+                            ),
+                        )
+                        session.add(item)
+                        session.flush()
+                        id_map[local_item_id] = item.id
+                        raw_item_sources = raw_item.get("sources")
+                        if isinstance(raw_item_sources, list):
+                            for source in raw_item_sources:
+                                if not isinstance(source, dict) or not isinstance(source.get("recipeId"), str):
+                                    continue
+                                mapped_recipe_id = id_map.get(source["recipeId"])
+                                source_quantity = source.get("quantity")
+                                source_name = source.get("recipeName")
+                                source_servings = source.get("servings")
+                                source_unit = source.get("unit")
+                                if (
+                                    mapped_recipe_id is None
+                                    or not isinstance(source_quantity, str)
+                                    or not isinstance(source_name, str)
+                                    or not isinstance(source_servings, int)
+                                    or source_unit not in {"g", "ml", "item"}
+                                ):
+                                    continue
+                                try:
+                                    stored_source_quantity = (Decimal(source_quantity) / Decimal(1000)).quantize(
+                                        THREE_PLACES, rounding=ROUND_HALF_UP
+                                    )
+                                except InvalidOperation:
+                                    continue
+                                session.add(
+                                    GroceryListItemSource(
+                                        grocery_list_item_id=item.id,
+                                        recipe_snapshot_id=mapped_recipe_id,
+                                        recipe_name=source_name,
+                                        servings=source_servings,
+                                        quantity=stored_source_quantity,
+                                        unit=source_unit,
+                                    )
+                                )
+    session.flush()
 
     return LocalImportResponse(
         revision=user.state_revision,

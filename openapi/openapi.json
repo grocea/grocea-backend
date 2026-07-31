@@ -101,6 +101,86 @@
         "title": "ActivityResponse",
         "type": "object"
       },
+      "BasketItemResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "base_servings": {
+            "title": "Base Servings",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "recipe_name": {
+            "title": "Recipe Name",
+            "type": "string"
+          },
+          "servings": {
+            "title": "Servings",
+            "type": "integer"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "recipe_name",
+          "servings",
+          "base_servings",
+          "valid",
+          "error"
+        ],
+        "title": "BasketItemResponse",
+        "type": "object"
+      },
+      "BasketItemUpsert": {
+        "additionalProperties": false,
+        "properties": {
+          "servings": {
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Servings",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "servings"
+        ],
+        "title": "BasketItemUpsert",
+        "type": "object"
+      },
+      "BasketResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BasketItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "BasketResponse",
+        "type": "object"
+      },
       "CategoryCreate": {
         "additionalProperties": false,
         "properties": {
@@ -245,6 +325,608 @@
           "request_id"
         ],
         "title": "ErrorResponse",
+        "type": "object"
+      },
+      "GroceryListBasisIngredient": {
+        "additionalProperties": false,
+        "properties": {
+          "ingredient_id": {
+            "format": "uuid",
+            "title": "Ingredient Id",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,12}|(?=[\\d.]{1,16}0*$)\\d{0,12}\\.\\d{0,3}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Quantity"
+          }
+        },
+        "required": [
+          "ingredient_id",
+          "quantity"
+        ],
+        "title": "GroceryListBasisIngredient",
+        "type": "object"
+      },
+      "GroceryListComplete": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "format": "uuid",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "pantry_item_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Pantry Item Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event_id"
+        ],
+        "title": "GroceryListComplete",
+        "type": "object"
+      },
+      "GroceryListCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "generated_item_ids": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryListGeneratedItemId"
+            },
+            "title": "Generated Item Ids",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "pantry_basis": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryListPantryBasis"
+            },
+            "title": "Pantry Basis",
+            "type": "array"
+          },
+          "recipe_basis": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryListRecipeBasis"
+            },
+            "title": "Recipe Basis",
+            "type": "array"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "GroceryListCreate",
+        "type": "object"
+      },
+      "GroceryListGeneratedItemId": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ingredient_id": {
+            "format": "uuid",
+            "title": "Ingredient Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ingredient_id",
+          "id"
+        ],
+        "title": "GroceryListGeneratedItemId",
+        "type": "object"
+      },
+      "GroceryListItemCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ingredient_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredient Id"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,12}|(?=[\\d.]{1,16}0*$)\\d{0,12}\\.\\d{0,3}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "GroceryListItemCreate",
+        "type": "object"
+      },
+      "GroceryListItemResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "category_name": {
+            "title": "Category Name",
+            "type": "string"
+          },
+          "checked": {
+            "title": "Checked",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "edited": {
+            "title": "Edited",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ingredient_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredient Id"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "measurement_family": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementFamily"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "origin": {
+            "enum": [
+              "generated",
+              "manual"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "original_pantry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Pantry"
+          },
+          "original_quantity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Quantity"
+          },
+          "original_required": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Required"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryListItemSourceResponse"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ingredient_id",
+          "label",
+          "category_name",
+          "measurement_family",
+          "quantity",
+          "unit",
+          "checked",
+          "origin",
+          "edited",
+          "original_required",
+          "original_pantry",
+          "original_quantity",
+          "sources",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "GroceryListItemResponse",
+        "type": "object"
+      },
+      "GroceryListItemSourceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "recipe_name": {
+            "title": "Recipe Name",
+            "type": "string"
+          },
+          "servings": {
+            "title": "Servings",
+            "type": "integer"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/Unit"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "recipe_name",
+          "servings",
+          "quantity",
+          "unit"
+        ],
+        "title": "GroceryListItemSourceResponse",
+        "type": "object"
+      },
+      "GroceryListItemUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "checked": {
+            "title": "Checked",
+            "type": "boolean"
+          },
+          "ingredient_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredient Id"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,12}|(?=[\\d.]{1,16}0*$)\\d{0,12}\\.\\d{0,3}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "label",
+          "checked"
+        ],
+        "title": "GroceryListItemUpdate",
+        "type": "object"
+      },
+      "GroceryListPantryBasis": {
+        "additionalProperties": false,
+        "properties": {
+          "ingredient_id": {
+            "format": "uuid",
+            "title": "Ingredient Id",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,12}|(?=[\\d.]{1,16}0*$)\\d{0,12}\\.\\d{0,3}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Quantity"
+          }
+        },
+        "required": [
+          "ingredient_id",
+          "quantity"
+        ],
+        "title": "GroceryListPantryBasis",
+        "type": "object"
+      },
+      "GroceryListRecipeBasis": {
+        "additionalProperties": false,
+        "properties": {
+          "base_servings": {
+            "minimum": 1.0,
+            "title": "Base Servings",
+            "type": "integer"
+          },
+          "ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryListBasisIngredient"
+            },
+            "title": "Ingredients",
+            "type": "array"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "base_servings",
+          "ingredients"
+        ],
+        "title": "GroceryListRecipeBasis",
+        "type": "object"
+      },
+      "GroceryListRecipeResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "base_servings": {
+            "title": "Base Servings",
+            "type": "integer"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "recipe_name": {
+            "title": "Recipe Name",
+            "type": "string"
+          },
+          "servings": {
+            "title": "Servings",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "recipe_name",
+          "servings",
+          "base_servings"
+        ],
+        "title": "GroceryListRecipeResponse",
+        "type": "object"
+      },
+      "GroceryListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryListItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "recipes": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryListRecipeResponse"
+            },
+            "title": "Recipes",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GroceryListStatus"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "recipes",
+          "items",
+          "created_at",
+          "updated_at",
+          "completed_at"
+        ],
+        "title": "GroceryListResponse",
+        "type": "object"
+      },
+      "GroceryListStatus": {
+        "enum": [
+          "active",
+          "completed"
+        ],
+        "title": "GroceryListStatus",
+        "type": "string"
+      },
+      "GroceryListUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "GroceryListUpdate",
         "type": "object"
       },
       "HealthResponse": {
@@ -916,11 +1598,21 @@
             "title": "Activity",
             "type": "array"
           },
+          "basket": {
+            "$ref": "#/components/schemas/BasketResponse"
+          },
           "categories": {
             "items": {
               "$ref": "#/components/schemas/CategoryResponse"
             },
             "title": "Categories",
+            "type": "array"
+          },
+          "grocery_lists": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryListResponse"
+            },
+            "title": "Grocery Lists",
             "type": "array"
           },
           "ingredients": {
@@ -959,7 +1651,9 @@
           "ingredients",
           "pantry_stocks",
           "recipes",
-          "activity"
+          "activity",
+          "basket",
+          "grocery_lists"
         ],
         "title": "StateResponse",
         "type": "object"
@@ -1327,6 +2021,307 @@
         "summary": "Post Activity Reverse",
         "tags": [
           "activity"
+        ]
+      }
+    },
+    "/api/basket": {
+      "delete": {
+        "operationId": "delete_basket_api_basket_delete",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasketResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Delete Basket",
+        "tags": [
+          "basket"
+        ]
+      }
+    },
+    "/api/basket/recipes/{recipe_id}": {
+      "delete": {
+        "operationId": "delete_basket_recipe_api_basket_recipes__recipe_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasketResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Delete Basket Recipe",
+        "tags": [
+          "basket"
+        ]
+      },
+      "put": {
+        "operationId": "put_basket_recipe_api_basket_recipes__recipe_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BasketItemUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasketResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Put Basket Recipe",
+        "tags": [
+          "basket"
         ]
       }
     },
@@ -1931,6 +2926,1036 @@
         "summary": "Post Category Restore",
         "tags": [
           "categories"
+        ]
+      }
+    },
+    "/api/grocery-lists": {
+      "get": {
+        "operationId": "read_grocery_lists_api_grocery_lists_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GroceryListResponse"
+                  },
+                  "title": "Response Read Grocery Lists Api Grocery Lists Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Read Grocery Lists",
+        "tags": [
+          "grocery-lists"
+        ]
+      }
+    },
+    "/api/grocery-lists/from-basket": {
+      "post": {
+        "operationId": "post_grocery_list_from_basket_api_grocery_lists_from_basket_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroceryListCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroceryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Post Grocery List From Basket",
+        "tags": [
+          "grocery-lists"
+        ]
+      }
+    },
+    "/api/grocery-lists/{grocery_list_id}": {
+      "delete": {
+        "operationId": "delete_grocery_list_route_api_grocery_lists__grocery_list_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grocery_list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "restore_recipes",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Restore Recipes",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasketResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Delete Grocery List Route",
+        "tags": [
+          "grocery-lists"
+        ]
+      },
+      "get": {
+        "operationId": "read_grocery_list_api_grocery_lists__grocery_list_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grocery_list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroceryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Read Grocery List",
+        "tags": [
+          "grocery-lists"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_grocery_list_api_grocery_lists__grocery_list_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grocery_list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroceryListUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroceryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Patch Grocery List",
+        "tags": [
+          "grocery-lists"
+        ]
+      }
+    },
+    "/api/grocery-lists/{grocery_list_id}/complete": {
+      "post": {
+        "operationId": "post_grocery_list_complete_api_grocery_lists__grocery_list_id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grocery_list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroceryListComplete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroceryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Post Grocery List Complete",
+        "tags": [
+          "grocery-lists"
+        ]
+      }
+    },
+    "/api/grocery-lists/{grocery_list_id}/items": {
+      "post": {
+        "operationId": "post_grocery_list_item_api_grocery_lists__grocery_list_id__items_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grocery_list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroceryListItemCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroceryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Post Grocery List Item",
+        "tags": [
+          "grocery-lists"
+        ]
+      }
+    },
+    "/api/grocery-lists/{grocery_list_id}/items/{grocery_item_id}": {
+      "delete": {
+        "operationId": "delete_grocery_list_item_api_grocery_lists__grocery_list_id__items__grocery_item_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grocery_list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "grocery_item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroceryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Delete Grocery List Item",
+        "tags": [
+          "grocery-lists"
+        ]
+      },
+      "put": {
+        "operationId": "put_grocery_list_item_api_grocery_lists__grocery_list_id__items__grocery_item_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grocery_list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "grocery_item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroceryListItemUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroceryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Put Grocery List Item",
+        "tags": [
+          "grocery-lists"
+        ]
+      }
+    },
+    "/api/grocery-lists/{grocery_list_id}/reuse-recipes": {
+      "post": {
+        "operationId": "post_grocery_list_reuse_api_grocery_lists__grocery_list_id__reuse_recipes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grocery_list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Grocery List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-ID",
+            "required": true,
+            "schema": {
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasketResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Post Grocery List Reuse",
+        "tags": [
+          "grocery-lists"
         ]
       }
     },

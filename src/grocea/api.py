@@ -15,18 +15,32 @@ from grocea.errors import DomainError
 from grocea.full_services import (
     activity_response,
     adjust_stock,
+    clear_basket,
+    complete_grocery_list,
     cook_recipe,
+    create_grocery_list_from_basket,
+    create_grocery_list_item,
     create_recipe,
+    delete_grocery_list,
+    get_grocery_list_model,
     get_recipe_model,
+    grocery_list_response,
     import_local_state,
     list_activity,
+    list_grocery_lists,
     list_pantry_stocks,
     list_recipes,
     publish_recipe,
     recipe_response,
+    remove_basket_item,
+    remove_grocery_list_item,
+    reuse_grocery_list_recipes,
     reverse_activity,
     state_response,
+    update_grocery_list,
+    update_grocery_list_item,
     update_recipe,
+    upsert_basket_item,
 )
 from grocea.full_services import (
     delete_recipe as delete_recipe_service,
@@ -34,11 +48,19 @@ from grocea.full_services import (
 from grocea.models import ActivityEvent, ProcessedMutation, User
 from grocea.schemas import (
     ActivityResponse,
+    BasketItemUpsert,
+    BasketResponse,
     CategoryCreate,
     CategoryResponse,
     CategoryUpdate,
     CookRecipeCreate,
     ErrorResponse,
+    GroceryListComplete,
+    GroceryListCreate,
+    GroceryListItemCreate,
+    GroceryListItemUpdate,
+    GroceryListResponse,
+    GroceryListUpdate,
     HealthResponse,
     IngredientCreate,
     IngredientPage,
@@ -423,6 +445,254 @@ def post_stock_operation(
         "stock.operation",
         ActivityResponse,
         lambda: adjust_stock(session, user, ingredient_id, payload),
+    )
+
+
+@router.put("/basket/recipes/{recipe_id}", response_model=BasketResponse, tags=["basket"])
+def put_basket_recipe(
+    recipe_id: UUID,
+    payload: BasketItemUpsert,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> BasketResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "basket.recipe.upsert",
+        BasketResponse,
+        lambda: upsert_basket_item(session, user, recipe_id, payload),
+    )
+
+
+@router.delete("/basket/recipes/{recipe_id}", response_model=BasketResponse, tags=["basket"])
+def delete_basket_recipe(
+    recipe_id: UUID,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> BasketResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "basket.recipe.remove",
+        BasketResponse,
+        lambda: remove_basket_item(session, user, recipe_id),
+    )
+
+
+@router.delete("/basket", response_model=BasketResponse, tags=["basket"])
+def delete_basket(
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> BasketResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "basket.clear",
+        BasketResponse,
+        lambda: clear_basket(session, user),
+    )
+
+
+@router.post(
+    "/grocery-lists/from-basket",
+    response_model=GroceryListResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["grocery-lists"],
+)
+def post_grocery_list_from_basket(
+    payload: GroceryListCreate,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> GroceryListResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "grocery-list.create",
+        GroceryListResponse,
+        lambda: create_grocery_list_from_basket(session, user, payload),
+    )
+
+
+@router.post(
+    "/grocery-lists/{grocery_list_id}/items",
+    response_model=GroceryListResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["grocery-lists"],
+)
+def post_grocery_list_item(
+    grocery_list_id: UUID,
+    payload: GroceryListItemCreate,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> GroceryListResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "grocery-list.item.create",
+        GroceryListResponse,
+        lambda: create_grocery_list_item(session, user, grocery_list_id, payload),
+    )
+
+
+@router.put(
+    "/grocery-lists/{grocery_list_id}/items/{grocery_item_id}",
+    response_model=GroceryListResponse,
+    tags=["grocery-lists"],
+)
+def put_grocery_list_item(
+    grocery_list_id: UUID,
+    grocery_item_id: UUID,
+    payload: GroceryListItemUpdate,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> GroceryListResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "grocery-list.item.update",
+        GroceryListResponse,
+        lambda: update_grocery_list_item(session, user, grocery_list_id, grocery_item_id, payload),
+    )
+
+
+@router.post(
+    "/grocery-lists/{grocery_list_id}/complete",
+    response_model=GroceryListResponse,
+    tags=["grocery-lists"],
+)
+def post_grocery_list_complete(
+    grocery_list_id: UUID,
+    payload: GroceryListComplete,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> GroceryListResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "grocery-list.complete",
+        GroceryListResponse,
+        lambda: complete_grocery_list(session, user, grocery_list_id, payload),
+    )
+
+
+@router.get("/grocery-lists", response_model=list[GroceryListResponse], tags=["grocery-lists"])
+def read_grocery_lists(session: DbSession, user: CurrentUser) -> list[GroceryListResponse]:
+    return list_grocery_lists(session, user)
+
+
+@router.get("/grocery-lists/{grocery_list_id}", response_model=GroceryListResponse, tags=["grocery-lists"])
+def read_grocery_list(grocery_list_id: UUID, session: DbSession, user: CurrentUser) -> GroceryListResponse:
+    return grocery_list_response(session, get_grocery_list_model(session, user, grocery_list_id))
+
+
+@router.patch("/grocery-lists/{grocery_list_id}", response_model=GroceryListResponse, tags=["grocery-lists"])
+def patch_grocery_list(
+    grocery_list_id: UUID,
+    payload: GroceryListUpdate,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> GroceryListResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "grocery-list.update",
+        GroceryListResponse,
+        lambda: update_grocery_list(session, user, grocery_list_id, payload),
+    )
+
+
+@router.delete(
+    "/grocery-lists/{grocery_list_id}/items/{grocery_item_id}",
+    response_model=GroceryListResponse,
+    tags=["grocery-lists"],
+)
+def delete_grocery_list_item(
+    grocery_list_id: UUID,
+    grocery_item_id: UUID,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> GroceryListResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "grocery-list.item.delete",
+        GroceryListResponse,
+        lambda: remove_grocery_list_item(session, user, grocery_list_id, grocery_item_id),
+    )
+
+
+@router.post("/grocery-lists/{grocery_list_id}/reuse-recipes", response_model=BasketResponse, tags=["grocery-lists"])
+def post_grocery_list_reuse(
+    grocery_list_id: UUID,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> BasketResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "grocery-list.reuse",
+        BasketResponse,
+        lambda: reuse_grocery_list_recipes(session, user, grocery_list_id),
+    )
+
+
+@router.delete("/grocery-lists/{grocery_list_id}", response_model=BasketResponse, tags=["grocery-lists"])
+def delete_grocery_list_route(
+    grocery_list_id: UUID,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+    restore_recipes: bool = False,
+) -> BasketResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "grocery-list.delete",
+        BasketResponse,
+        lambda: delete_grocery_list(session, user, grocery_list_id, restore_recipes=restore_recipes),
     )
 
 

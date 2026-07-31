@@ -47,6 +47,11 @@ class RecipeStatus(StrEnum):
     PUBLISHED = "published"
 
 
+class GroceryListStatus(StrEnum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+
+
 class StockOperation(StrEnum):
     ADD = "add"
     SET = "set"
@@ -207,6 +212,150 @@ class CookRecipeCreate(ApiModel):
     servings: int = Field(ge=1, le=1000)
 
 
+class BasketItemUpsert(ApiModel):
+    servings: int = Field(ge=1, le=12)
+
+
+class BasketItemResponse(ApiModel):
+    recipe_id: UUID
+    recipe_name: str
+    servings: int
+    base_servings: int
+    valid: bool
+    error: str | None
+
+
+class BasketResponse(ApiModel):
+    items: list[BasketItemResponse]
+
+
+class GroceryListRecipeResponse(ApiModel):
+    recipe_id: UUID
+    recipe_name: str
+    servings: int
+    base_servings: int
+
+
+class GroceryListGeneratedItemId(ApiModel):
+    ingredient_id: UUID
+    id: UUID
+
+
+class GroceryListBasisIngredient(ApiModel):
+    ingredient_id: UUID
+    quantity: Decimal = Field(max_digits=15, decimal_places=3)
+
+
+class GroceryListRecipeBasis(ApiModel):
+    recipe_id: UUID
+    base_servings: int = Field(ge=1)
+    ingredients: list[GroceryListBasisIngredient]
+
+
+class GroceryListPantryBasis(ApiModel):
+    ingredient_id: UUID
+    quantity: Decimal = Field(max_digits=15, decimal_places=3)
+
+
+class GroceryListCreate(ApiModel):
+    id: UUID
+    title: Name | None = None
+    generated_item_ids: list[GroceryListGeneratedItemId] = Field(default_factory=list)
+    recipe_basis: list[GroceryListRecipeBasis] = Field(default_factory=list)
+    pantry_basis: list[GroceryListPantryBasis] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_generated_item_ids(self) -> Self:
+        if len({item.ingredient_id for item in self.generated_item_ids}) != len(self.generated_item_ids):
+            raise ValueError("Generated Grocery List Ingredient IDs must be unique.")
+        if len({item.id for item in self.generated_item_ids}) != len(self.generated_item_ids):
+            raise ValueError("Generated Grocery List Item IDs must be unique.")
+        if len({item.recipe_id for item in self.recipe_basis}) != len(self.recipe_basis):
+            raise ValueError("Grocery List Recipe basis must be unique.")
+        if len({item.ingredient_id for item in self.pantry_basis}) != len(self.pantry_basis):
+            raise ValueError("Grocery List Pantry basis must be unique.")
+        return self
+
+
+class GroceryListUpdate(ApiModel):
+    title: Name
+
+
+class GroceryListItemCreate(ApiModel):
+    id: UUID
+    ingredient_id: UUID | None = None
+    label: Name
+    quantity: Decimal | None = Field(default=None, gt=0, max_digits=15, decimal_places=3)
+    unit: str | None = Field(default=None, max_length=40)
+
+    @model_validator(mode="after")
+    def validate_amount_unit(self) -> Self:
+        if (self.quantity is None) != (self.unit is None):
+            raise ValueError("Quantity and unit must be provided together.")
+        if self.unit is not None and not self.unit.strip():
+            raise ValueError("Unit cannot be blank.")
+        return self
+
+
+class GroceryListItemUpdate(ApiModel):
+    ingredient_id: UUID | None = None
+    label: Name
+    quantity: Decimal | None = Field(default=None, gt=0, max_digits=15, decimal_places=3)
+    unit: str | None = Field(default=None, max_length=40)
+    checked: bool
+
+    @model_validator(mode="after")
+    def validate_amount_unit(self) -> Self:
+        if (self.quantity is None) != (self.unit is None):
+            raise ValueError("Quantity and unit must be provided together.")
+        if self.unit is not None and not self.unit.strip():
+            raise ValueError("Unit cannot be blank.")
+        return self
+
+
+class GroceryListComplete(ApiModel):
+    event_id: UUID
+    pantry_item_ids: list[UUID] = Field(default_factory=list)
+
+
+class GroceryListItemSourceResponse(ApiModel):
+    recipe_id: UUID
+    recipe_name: str
+    servings: int
+    quantity: SerializedDecimal
+    unit: Unit
+
+
+class GroceryListItemResponse(ApiModel):
+    id: UUID
+    ingredient_id: UUID | None
+    label: str
+    category_name: str
+    measurement_family: MeasurementFamily | None
+    quantity: SerializedDecimal | None
+    unit: str | None
+    checked: bool
+    origin: Literal["generated", "manual"]
+    edited: bool
+    original_required: SerializedDecimal | None
+    original_pantry: SerializedDecimal | None
+    original_quantity: SerializedDecimal | None
+    sources: list[GroceryListItemSourceResponse]
+    created_at: datetime
+    updated_at: datetime
+
+
+class GroceryListResponse(ApiModel):
+    id: UUID
+    title: str
+    status: GroceryListStatus
+    recipes: list[GroceryListRecipeResponse]
+    items: list[GroceryListItemResponse]
+    created_at: datetime
+    updated_at: datetime
+    completed_at: datetime | None
+
+
 class StockChangeResponse(ApiModel):
     ingredient_id: UUID
     before: SerializedDecimal
@@ -239,6 +388,8 @@ class StateResponse(ApiModel):
     pantry_stocks: list[PantryStockResponse]
     recipes: list[RecipeResponse]
     activity: list[ActivityResponse]
+    basket: BasketResponse
+    grocery_lists: list[GroceryListResponse]
 
 
 class LocalImportRequest(ApiModel):
