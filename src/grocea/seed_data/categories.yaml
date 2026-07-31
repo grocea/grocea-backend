@@ -1,0 +1,25 @@
+categories:
+  - id: 85055f47-90f2-5f8b-8832-cb570f9f3aec
+    key: produce
+    name: Produce
+  - id: dc5a45b6-63bc-5381-8d0e-bc760eff5bac
+    key: dairy
+    name: Dairy
+  - id: 7459e73b-ad23-5836-a4f4-4e700a0ada9e
+    key: meat-seafood
+    name: Meat & Seafood
+  - id: 93fc40ae-6e3c-5d6a-9ea2-643c206c5f3c
+    key: grains-bakery
+    name: Grains & Bakery
+  - id: 03a4fbd9-54d6-5c07-a7c4-58ca68efe3cc
+    key: pantry
+    name: Pantry
+  - id: 6e9d35a7-6da2-5160-b81e-71271792b12d
+    key: frozen
+    name: Frozen
+  - id: 3cee972a-e690-5f4a-9820-1099b2f78794
+    key: beverages
+    name: Beverages
+  - id: 04a9b0f2-7f95-509a-8ca8-86f75fde31ee
+    key: other
+    name: Other

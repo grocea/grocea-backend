@@ -1,0 +1,601 @@
+ingredients:
+  - id: 8d7e6a71-4677-5825-a968-423244a8206c
+    name: 'Banana'
+    category: produce
+    measurement_family: count
+  - id: 97ef9f38-26e4-5faf-8a7e-4b81afcc8d11
+    name: 'Apple'
+    category: produce
+    measurement_family: count
+  - id: 5715d4a5-76b2-5362-aac8-52f306938004
+    name: 'Orange'
+    category: produce
+    measurement_family: count
+  - id: 798bb7fa-3a85-5f84-b71e-dedb2795e779
+    name: 'Lime'
+    category: produce
+    measurement_family: count
+  - id: c938231b-3016-59b1-b2cd-ab47b3d2a462
+    name: 'Lemon'
+    category: produce
+    measurement_family: count
+  - id: 688bca15-eeb6-5f49-8a4a-0fc84a6f975d
+    name: 'Mango'
+    category: produce
+    measurement_family: count
+  - id: bbed20c8-edf4-5bc7-b0a5-4bd421840288
+    name: 'Papaya'
+    category: produce
+    measurement_family: count
+  - id: 18f63a20-9fc2-5969-9eee-bb456daaaa24
+    name: 'Pineapple'
+    category: produce
+    measurement_family: count
+  - id: 8742c08d-85da-57d2-b8e7-81ba2527e256
+    name: 'Watermelon'
+    category: produce
+    measurement_family: count
+  - id: eca030e0-7c93-5b24-b2f8-0ee903dc2dbd
+    name: 'Dragon fruit'
+    category: produce
+    measurement_family: count
+  - id: b9561a8e-8e14-5818-8db5-b3b0062b7bc6
+    name: 'Avocado'
+    category: produce
+    measurement_family: count
+  - id: 3bd08a6c-cd04-5796-b117-061506d4bfdd
+    name: 'Coconut'
+    category: produce
+    measurement_family: count
+  - id: de2d9167-7635-5f65-a749-3749fdcb9b72
+    name: 'Tomato'
+    category: produce
+    measurement_family: count
+  - id: 2b71b1ff-1670-5500-85d2-5f1c94722745
+    name: 'Cherry tomatoes'
+    category: produce
+    measurement_family: mass
+  - id: 4e749e97-2bc6-5f9c-8d5f-b66cb6455831
+    name: 'Cucumber'
+    category: produce
+    measurement_family: count
+  - id: 20e751fb-360c-5cee-a371-245a1f0b2fac
+    name: 'Carrot'
+    category: produce
+    measurement_family: count
+  - id: 1c605763-86bc-50dc-916b-8519062cef3e
+    name: 'Potato'
+    category: produce
+    measurement_family: mass
+  - id: b8fbb9a4-406d-5bd9-a2d7-979503b54ba9
+    name: 'Sweet potato'
+    category: produce
+    measurement_family: mass
+  - id: 65feac34-6086-56fb-a42c-aaa0724cfa8f
+    name: 'Onion'
+    category: produce
+    measurement_family: count
+  - id: cedd277d-3c40-5630-8307-c1d5038ce2bd
+    name: 'Red onion'
+    category: produce
+    measurement_family: count
+  - id: c9229312-fd32-50a8-a21e-158526024c13
+    name: 'Garlic'
+    category: produce
+    measurement_family: mass
+  - id: e4600997-f3bd-5f05-9c2b-5f48b8d367af
+    name: 'Ginger'
+    category: produce
+    measurement_family: mass
+  - id: 8b0f5c84-d059-56d3-a258-7f2130858cd8
+    name: 'Galangal'
+    category: produce
+    measurement_family: mass
+  - id: 4629ef41-faff-5106-b2e5-667861c493db
+    name: 'Lemongrass'
+    category: produce
+    measurement_family: count
+  - id: c79da3ab-d0e3-55d2-a684-37c13518fcd8
+    name: 'Spring onion'
+    category: produce
+    measurement_family: mass
+  - id: 1ac3a428-d297-5d62-8e2a-16704730b8eb
+    name: 'Coriander leaves'
+    category: produce
+    measurement_family: mass
+  - id: 4ea93702-35cf-52c4-bc1a-2a9b7876169a
+    name: 'Curry leaves'
+    category: produce
+    measurement_family: mass
+  - id: da0b268b-91b5-59e9-851c-6e5427e49013
+    name: 'Pandan leaves'
+    category: produce
+    measurement_family: count
+  - id: 4fc1424c-9342-57d6-a7cc-e71284d4e334
+    name: 'Spinach'
+    category: produce
+    measurement_family: mass
+  - id: 5c995ac9-5b89-54d9-bd27-6a0cb94e66bb
+    name: 'Water spinach'
+    category: produce
+    measurement_family: mass
+  - id: 2912afb1-3e50-54c9-9c1a-8d95177210ff
+    name: 'Cabbage'
+    category: produce
+    measurement_family: count
+  - id: e1d79d41-c21c-5cf0-9ede-b537db43b5cc
+    name: 'Bok choy'
+    category: produce
+    measurement_family: count
+  - id: ab2e4be2-be9c-5c65-8623-a63235f7d247
+    name: 'Broccoli'
+    category: produce
+    measurement_family: count
+  - id: e6999344-f217-57e9-a70c-01103285bbcf
+    name: 'Cauliflower'
+    category: produce
+    measurement_family: count
+  - id: 33a00c76-66c2-528c-b0f3-ae4ea2c79337
+    name: 'Eggplant'
+    category: produce
+    measurement_family: count
+  - id: 21103a1c-1038-5799-aa59-62a0beceed27
+    name: 'Okra'
+    category: produce
+    measurement_family: mass
+  - id: 6577d76c-d9c5-5017-877a-70018a90d34e
+    name: 'Green beans'
+    category: produce
+    measurement_family: mass
+  - id: 5ace3193-c18f-5a43-99dd-c009ce72d7bb
+    name: 'Bean sprouts'
+    category: produce
+    measurement_family: mass
+  - id: f23b47be-5396-597c-adff-59df4c6bc082
+    name: 'Red chilli'
+    category: produce
+    measurement_family: mass
+  - id: 2e47d883-dfc8-54d0-ab1f-6443774a2ff0
+    name: 'Bird''s eye chilli'
+    category: produce
+    measurement_family: mass
+  - id: 0dea3fe9-be39-59f7-a7d3-1f00479146c7
+    name: 'Whole milk'
+    category: dairy
+    measurement_family: volume
+  - id: d4da2f6d-ae8e-5b4b-8237-9621e01e6e98
+    name: 'Low-fat milk'
+    category: dairy
+    measurement_family: volume
+  - id: a4c2ca81-b1c6-53ec-84b2-ea36225349fb
+    name: 'Butter'
+    category: dairy
+    measurement_family: mass
+  - id: d7d54bce-bb8e-5546-9dfa-4efd0a502fce
+    name: 'Cheddar cheese'
+    category: dairy
+    measurement_family: mass
+  - id: 396f6d40-49e1-5349-9355-600a21c60e13
+    name: 'Mozzarella'
+    category: dairy
+    measurement_family: mass
+  - id: 3b7ed34b-95bc-5e36-a4df-aa1e13caaa06
+    name: 'Cream cheese'
+    category: dairy
+    measurement_family: mass
+  - id: e7d9bf82-8162-5645-a49a-e1e7ddd8b43b
+    name: 'Plain yogurt'
+    category: dairy
+    measurement_family: mass
+  - id: f1d12bd2-ccf9-5817-a779-22f1c7d0f4dc
+    name: 'Greek yogurt'
+    category: dairy
+    measurement_family: mass
+  - id: fc8f4b2f-5323-57a7-9122-2589aca6a0aa
+    name: 'Cooking cream'
+    category: dairy
+    measurement_family: volume
+  - id: 71c89638-ee49-5ab4-857a-6413b4bc34d6
+    name: 'Condensed milk'
+    category: dairy
+    measurement_family: mass
+  - id: 83b863a8-d234-58f0-8719-b892f7c8c255
+    name: 'Chicken breast'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 1f413331-d108-54c1-ad6e-28e9c6d5dce4
+    name: 'Chicken thigh'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 1425e45b-fcc9-510e-9850-1b504e6df427
+    name: 'Whole chicken'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 9d845622-4958-516e-af3f-360a60585f42
+    name: 'Minced chicken'
+    category: meat-seafood
+    measurement_family: mass
+  - id: ef43fab5-cdd8-5050-a6ca-a9e922af359b
+    name: 'Beef steak'
+    category: meat-seafood
+    measurement_family: mass
+  - id: f5c92d49-2c37-5711-973b-312ea2ba97f6
+    name: 'Minced beef'
+    category: meat-seafood
+    measurement_family: mass
+  - id: d07c778c-9580-5629-b049-c233e568c67d
+    name: 'Beef brisket'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 58e78c32-a012-529c-bed8-8a090be8d0a2
+    name: 'Lamb shoulder'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 907552e1-6926-568c-99f4-ce0068114bae
+    name: 'Minced lamb'
+    category: meat-seafood
+    measurement_family: mass
+  - id: d6f524c1-5df2-5ade-9202-093fe120d01a
+    name: 'Pork belly'
+    category: meat-seafood
+    measurement_family: mass
+  - id: e932d78c-871e-5c20-ace7-b5e504b8b0a2
+    name: 'Pork loin'
+    category: meat-seafood
+    measurement_family: mass
+  - id: b22e629a-56de-546c-9e1a-8db59a9dca96
+    name: 'Duck breast'
+    category: meat-seafood
+    measurement_family: mass
+  - id: aa66189c-9b98-5d41-b4df-c22d901e4710
+    name: 'Egg'
+    category: meat-seafood
+    measurement_family: count
+  - id: 26453193-3935-517c-95fa-4cc24ea99257
+    name: 'Salmon fillet'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 2e71c161-8d81-53e2-9bd3-e182acb092c9
+    name: 'Tuna'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 42efd31b-3cb6-599d-b9b3-77d909ecedab
+    name: 'Mackerel'
+    category: meat-seafood
+    measurement_family: mass
+  - id: bc0ce755-8de6-5745-a635-1a8880c464c7
+    name: 'Sardine'
+    category: meat-seafood
+    measurement_family: mass
+  - id: e6706f94-d019-5ccd-8bf5-09a2457c6233
+    name: 'Prawn'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 70e532ae-31aa-5508-9c84-3df3086733c8
+    name: 'Squid'
+    category: meat-seafood
+    measurement_family: mass
+  - id: abff6015-53c7-5e74-9b2a-10720d3a1d96
+    name: 'Mussel'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 84cbd121-4bd1-5091-8ce9-22bd46c3ffe2
+    name: 'Clam'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 5cd4d854-fd83-5f01-82ff-d13a221e70dc
+    name: 'Crab'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 014d685e-b5c4-50fd-970d-27eb254a2a84
+    name: 'Fish ball'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 9354fd46-bc25-51b2-8071-3e71b235be50
+    name: 'Chicken sausage'
+    category: meat-seafood
+    measurement_family: mass
+  - id: bfbe8ccb-099f-51cf-a70d-b234733d34e7
+    name: 'Dried anchovy'
+    category: meat-seafood
+    measurement_family: mass
+  - id: 8edd0dcb-92ec-589a-9530-58b7b61a560d
+    name: 'White rice'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 93de2904-5359-5dca-9c36-17611d9f7a86
+    name: 'Basmati rice'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 07d05d94-42b7-51f9-891a-126d1bd59983
+    name: 'Jasmine rice'
+    category: grains-bakery
+    measurement_family: mass
+  - id: a4ed949a-104b-50b3-83fc-491cd53af011
+    name: 'Brown rice'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 545cefd3-68b3-589c-a4f2-b7c36243baf9
+    name: 'Glutinous rice'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 6b0e8a14-01d6-52f9-90d9-da8700aab720
+    name: 'Rolled oats'
+    category: grains-bakery
+    measurement_family: mass
+  - id: b6312f62-4392-58ef-8c3b-01dbca7aaf1a
+    name: 'Wheat flour'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 626c26c3-aa8f-5fa3-9dd3-66311a979bc0
+    name: 'Rice flour'
+    category: grains-bakery
+    measurement_family: mass
+  - id: f14d0898-b5fb-5c8f-a0ba-5091f71bd08f
+    name: 'Corn flour'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 3d882c1d-347b-57c1-902b-77c938486405
+    name: 'White bread'
+    category: grains-bakery
+    measurement_family: count
+  - id: ec712fc2-f6b9-5835-bf37-06cb8ea60a2f
+    name: 'Wholemeal bread'
+    category: grains-bakery
+    measurement_family: count
+  - id: f3bb3dda-86f8-53be-915b-4dc8c65a8cc2
+    name: 'Burger bun'
+    category: grains-bakery
+    measurement_family: count
+  - id: 59e1c412-9588-513b-875d-ae2fecc65664
+    name: 'Yellow noodles'
+    category: grains-bakery
+    measurement_family: mass
+  - id: ed3fe90a-68b3-54dd-ae10-66a49002bece
+    name: 'Rice noodles'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 00fc8423-4332-5323-90c2-184e6eb4d9d8
+    name: 'Rice vermicelli'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 6fb80ac8-6d36-534d-994a-27d529762c50
+    name: 'Spaghetti'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 14bb41b5-5779-5bae-9af2-2c3526f88415
+    name: 'Macaroni'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 62f48b2b-b144-53a3-a9a7-4a2cdf5faf14
+    name: 'Couscous'
+    category: grains-bakery
+    measurement_family: mass
+  - id: a780ac1c-0b0a-50a7-bb28-384313a382ee
+    name: 'Quinoa'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 5f59fa85-bc63-56f5-93ed-6196eb25479e
+    name: 'Breakfast cereal'
+    category: grains-bakery
+    measurement_family: mass
+  - id: 4ba3d4f9-2ed3-5178-b70e-9a1636f427a9
+    name: 'Cooking oil'
+    category: pantry
+    measurement_family: volume
+  - id: a1389fbf-acc8-5e0c-b168-6f7ca51e4298
+    name: 'Olive oil'
+    category: pantry
+    measurement_family: volume
+  - id: 8036db0a-f0f7-5b7c-b742-7b6bfdb20f7d
+    name: 'Sesame oil'
+    category: pantry
+    measurement_family: volume
+  - id: 56c7d0f7-f086-55f1-b067-298eaf3bb7a3
+    name: 'Coconut milk'
+    category: pantry
+    measurement_family: volume
+  - id: 93b0f788-35cb-5393-ac15-29a438368760
+    name: 'Soy sauce'
+    category: pantry
+    measurement_family: volume
+  - id: 9286d81c-3692-5580-ab56-7733f6879f5b
+    name: 'Dark soy sauce'
+    category: pantry
+    measurement_family: volume
+  - id: 6c18dc81-c70e-528c-942c-3173e3196aa2
+    name: 'Fish sauce'
+    category: pantry
+    measurement_family: volume
+  - id: 578bd56e-b315-5c29-b2e3-bb2b55cf5625
+    name: 'Oyster sauce'
+    category: pantry
+    measurement_family: volume
+  - id: dc6ac481-91a2-58df-89b2-57a751d2bf9a
+    name: 'White vinegar'
+    category: pantry
+    measurement_family: volume
+  - id: ddfca6a6-018f-540c-819e-e55aba878b87
+    name: 'Rice vinegar'
+    category: pantry
+    measurement_family: volume
+  - id: 0f38c703-f729-5bb3-949b-cf90586011e8
+    name: 'Salt'
+    category: pantry
+    measurement_family: mass
+  - id: 63e9672f-061c-5cb4-9ad9-055141a21529
+    name: 'White sugar'
+    category: pantry
+    measurement_family: mass
+  - id: 9040b003-d6a3-5027-b70b-1c7912fe66da
+    name: 'Brown sugar'
+    category: pantry
+    measurement_family: mass
+  - id: 89e120ae-260f-5800-8b90-95d65b5d28a2
+    name: 'Black pepper'
+    category: pantry
+    measurement_family: mass
+  - id: 8a3d30a6-2041-5372-b287-e53d3d4488fd
+    name: 'White pepper'
+    category: pantry
+    measurement_family: mass
+  - id: ef1658c5-e962-5ddb-a8ec-84582c339cfc
+    name: 'Curry powder'
+    category: pantry
+    measurement_family: mass
+  - id: 6fba2e03-ab21-5707-9696-0b5784167f6f
+    name: 'Ground turmeric'
+    category: pantry
+    measurement_family: mass
+  - id: ebab0e1b-5261-50b3-b6a2-36018116486f
+    name: 'Ground cumin'
+    category: pantry
+    measurement_family: mass
+  - id: 3b84cc7f-50d6-515a-9fa8-0e49eb1c6f23
+    name: 'Ground coriander'
+    category: pantry
+    measurement_family: mass
+  - id: e5a8ab22-cc77-5fac-ac05-61f27e3c7a4d
+    name: 'Paprika'
+    category: pantry
+    measurement_family: mass
+  - id: 694b8bca-1586-5df8-82d7-369ccfc6db53
+    name: 'Chilli powder'
+    category: pantry
+    measurement_family: mass
+  - id: 3f7beceb-c39a-568e-a418-e03470515ac8
+    name: 'Ground cinnamon'
+    category: pantry
+    measurement_family: mass
+  - id: 4474110a-46db-5a00-89e1-ba98a3bb2a13
+    name: 'Star anise'
+    category: pantry
+    measurement_family: mass
+  - id: aad0a0c8-0eb4-5937-9ed4-4af4a5e8c694
+    name: 'Clove'
+    category: pantry
+    measurement_family: mass
+  - id: d4c1cdf1-abdd-54c2-a200-aa5b3bcceaf0
+    name: 'Cardamom'
+    category: pantry
+    measurement_family: mass
+  - id: 37b6da16-2002-5a05-9e44-7e4a264a311d
+    name: 'Canned chickpeas'
+    category: pantry
+    measurement_family: mass
+  - id: 257dd6e7-e605-529e-9e7e-feac5dd1fc0f
+    name: 'Canned tomatoes'
+    category: pantry
+    measurement_family: mass
+  - id: 02e1748f-6f8a-5990-99f9-d4999185850f
+    name: 'Tomato paste'
+    category: pantry
+    measurement_family: mass
+  - id: 9813a62a-a176-5ddf-8b5b-6502e0de12ef
+    name: 'Peanut butter'
+    category: pantry
+    measurement_family: mass
+  - id: 17c9191c-02ae-5570-8f10-667241d94fb4
+    name: 'Sambal'
+    category: pantry
+    measurement_family: mass
+  - id: ea702bea-31a6-5886-8bf8-88542ebefd33
+    name: 'Belacan'
+    category: pantry
+    measurement_family: mass
+  - id: 75b28f65-a117-5c1a-9f83-ed00fc2f2095
+    name: 'Tofu'
+    category: pantry
+    measurement_family: mass
+  - id: 3d87b918-b7d3-580f-8fc1-186f3b5c2e9d
+    name: 'Tempeh'
+    category: pantry
+    measurement_family: mass
+  - id: aa14778a-e055-55a2-a5ef-2078e76e027d
+    name: 'Dried lentils'
+    category: pantry
+    measurement_family: mass
+  - id: db00ead4-2c5f-54ab-85c7-976e6ffcdbc7
+    name: 'Dried red beans'
+    category: pantry
+    measurement_family: mass
+  - id: c3c19882-ed7a-5995-b452-7012fba42539
+    name: 'Frozen peas'
+    category: frozen
+    measurement_family: mass
+  - id: 541d3fdf-6e55-5e56-ae30-81f7ef106112
+    name: 'Frozen mixed vegetables'
+    category: frozen
+    measurement_family: mass
+  - id: 42419f9c-5a1b-5303-a9bf-85fbfddeefce
+    name: 'Frozen corn'
+    category: frozen
+    measurement_family: mass
+  - id: 27ddc4d3-4391-5703-abd2-268cfc780ea7
+    name: 'Fish finger'
+    category: frozen
+    measurement_family: count
+  - id: 7287e620-1c71-5a63-9b15-7a4bdfb39af1
+    name: 'Ice cream'
+    category: frozen
+    measurement_family: mass
+  - id: 67749cba-c710-581a-9569-78fa24c12c30
+    name: 'Coffee beans'
+    category: beverages
+    measurement_family: mass
+  - id: 603c5280-038d-5d08-8ed5-d59abf92eeb3
+    name: 'Ground coffee'
+    category: beverages
+    measurement_family: mass
+  - id: 3c69d545-17d8-51d3-89e6-f59592461bb2
+    name: 'Instant coffee'
+    category: beverages
+    measurement_family: mass
+  - id: ff9606bf-881b-5cb1-aa17-f28517ef3bee
+    name: 'Black tea bag'
+    category: beverages
+    measurement_family: count
+  - id: a35ac481-cc6a-5079-80b1-95372c9635ac
+    name: 'Green tea bag'
+    category: beverages
+    measurement_family: count
+  - id: 7bce409b-ae78-522e-92d4-cf01a0ad1ece
+    name: 'Cocoa powder'
+    category: beverages
+    measurement_family: mass
+  - id: 28075909-fe1b-5d79-9ae4-a53cd5886100
+    name: 'Orange juice'
+    category: beverages
+    measurement_family: volume
+  - id: 3c827774-3750-59b9-b7cd-f1085c25770c
+    name: 'Apple juice'
+    category: beverages
+    measurement_family: volume
+  - id: 98f8ee79-df5a-5cba-9baa-293c92d76a83
+    name: 'Sparkling water'
+    category: beverages
+    measurement_family: volume
+  - id: 1a6e5ee3-6217-5bcd-8184-25e39aad9e4a
+    name: 'Coconut water'
+    category: beverages
+    measurement_family: volume
+  - id: bc676e9b-730f-5219-8188-c63c5281645c
+    name: 'Baking powder'
+    category: other
+    measurement_family: mass
+  - id: 05782988-f549-5a13-99a0-9e2c8afda523
+    name: 'Baking soda'
+    category: other
+    measurement_family: mass
+  - id: 15d3959b-0b97-591c-897c-644037a2fe33
+    name: 'Dry yeast'
+    category: other
+    measurement_family: mass
+  - id: 367b2442-5dcd-5d01-9281-43a99c81e473
+    name: 'Vanilla extract'
+    category: other
+    measurement_family: volume
+  - id: 3d1d02e7-293c-567e-b18d-d8046976d713
+    name: 'Food colouring'
+    category: other
+    measurement_family: volume

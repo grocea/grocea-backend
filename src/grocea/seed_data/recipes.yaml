@@ -1,0 +1,58 @@
+recipes:
+  - id: 7cb2740e-4dbb-5fa3-9c68-e446ea7b917a
+    name: Tomato egg rice
+    description: A fast, comforting rice bowl with soft eggs and juicy tomatoes.
+    base_servings: 2
+    ingredients:
+      - ingredient_id: 93de2904-5359-5dca-9c36-17611d9f7a86
+        quantity: '300.000'
+        quantity_input: '300'
+        unit: g
+      - ingredient_id: aa66189c-9b98-5d41-b4df-c22d901e4710
+        quantity: '2.000'
+        quantity_input: '2'
+        unit: item
+      - ingredient_id: de2d9167-7635-5f65-a749-3749fdcb9b72
+        quantity: '3.000'
+        quantity_input: '3'
+        unit: item
+    steps:
+      - Cook the rice until tender.
+      - Scramble the eggs and set aside.
+      - Cook tomatoes, return eggs, and serve over rice.
+  - id: c20a7893-720f-552b-883f-c25713529b7e
+    name: Oat porridge
+    description: Creamy everyday oats.
+    base_servings: 1
+    ingredients:
+      - ingredient_id: 6b0e8a14-01d6-52f9-90d9-da8700aab720
+        quantity: '80.000'
+        quantity_input: '80'
+        unit: g
+      - ingredient_id: 0dea3fe9-be39-59f7-a7d3-1f00479146c7
+        quantity: '250.000'
+        quantity_input: '250'
+        unit: ml
+    steps:
+      - Simmer oats and milk for 6 minutes.
+      - Rest briefly, then serve.
+  - id: 0fd4e19f-18b2-53bf-987d-20606a41df76
+    name: Vegetable fried rice
+    description: A quick pantry dinner.
+    base_servings: 2
+    ingredients:
+      - ingredient_id: 93de2904-5359-5dca-9c36-17611d9f7a86
+        quantity: '300.000'
+        quantity_input: '300'
+        unit: g
+      - ingredient_id: aa66189c-9b98-5d41-b4df-c22d901e4710
+        quantity: '2.000'
+        quantity_input: '2'
+        unit: item
+      - ingredient_id: 20e751fb-360c-5cee-a371-245a1f0b2fac
+        quantity: '2.000'
+        quantity_input: '2'
+        unit: item
+    steps:
+      - Stir-fry vegetables.
+      - Add rice and eggs, then season.
