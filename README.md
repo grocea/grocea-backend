@@ -64,6 +64,35 @@ and seeds it.
 Integration tests use `TEST_DATABASE_URL` and refuse databases not named
 `grocea_test`.
 
+## Vercel + Supabase deployment
+
+Vercel detects the FastAPI application through the `tool.vercel.entrypoint`
+setting in `pyproject.toml`. Leave Vercel Build Command, Install Command, and
+Output Directory unset; Vercel installs dependencies from `pyproject.toml` and
+`uv.lock` and runs the exported ASGI application.
+
+Set these Vercel environment variables for the production deployment:
+
+```text
+APP_ENV=production
+DATABASE_URL=postgresql+psycopg://postgres.<project-ref>:<password>@aws-<region>.pooler.supabase.com:6543/postgres?sslmode=require
+CORS_ORIGINS=https://<pwa-origin>
+TRUSTED_HOSTS=<api-host>,<project>.vercel.app
+AUTH_COOKIE_SAMESITE=lax
+LOG_LEVEL=INFO
+API_LOG_CAPACITY=500
+```
+
+Use Supabase's transaction pooler on port `6543` for Vercel requests. The
+engine uses `NullPool` and disables psycopg prepared statements for this mode.
+Use Supabase's direct connection on port `5432` only for migrations and seed
+commands. Do not run migrations or seeding as a Vercel build command.
+
+If the PWA and API are on unrelated domains such as `pages.dev` and
+`vercel.app`, set `AUTH_COOKIE_SAMESITE=none` and use HTTPS. Prefer custom
+domains under one parent domain, such as `app.example.com` and
+`api.example.com`, and keep the default `lax` setting.
+
 ## API boundary
 
 All application routes live under `/api`. Product routes require an authenticated

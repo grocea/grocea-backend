@@ -4,6 +4,7 @@ import hashlib
 import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Literal
 from uuid import UUID
 
 from email_validator import EmailNotValidError
@@ -178,3 +179,7 @@ def session_max_age(expires_at: datetime | None = None) -> int:
 
 def cookie_secure() -> bool:
     return get_settings().app_env not in {"local", "test"}
+
+
+def cookie_samesite() -> Literal["lax", "strict", "none"]:
+    return get_settings().auth_cookie_samesite
