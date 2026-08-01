@@ -33,6 +33,9 @@ dev = [
 [project.scripts]
 grocea = "grocea.cli:main"
 
+[tool.vercel]
+entrypoint = "src.index:app"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/grocea"]
 
