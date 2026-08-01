@@ -66,10 +66,10 @@ Integration tests use `TEST_DATABASE_URL` and refuse databases not named
 
 ## Vercel + Supabase deployment
 
-Vercel detects the FastAPI application through the `tool.vercel.entrypoint`
-setting in `pyproject.toml`. Leave Vercel Build Command, Install Command, and
-Output Directory unset; Vercel installs dependencies from `pyproject.toml` and
-`uv.lock` and runs the exported ASGI application.
+Vercel detects the FastAPI application through `src/index.py`. Leave Vercel
+Build Command, Install Command, and Output Directory unset; Vercel installs
+dependencies from `pyproject.toml` and `uv.lock` and runs the exported ASGI
+application.
 
 Set these Vercel environment variables for the production deployment:
 
