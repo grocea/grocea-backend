@@ -10,6 +10,7 @@ from grocea.auth import (
     IssuedSession,
     authenticate,
     change_password,
+    cookie_samesite,
     cookie_secure,
     create_account,
     revoke_session,
@@ -41,7 +42,7 @@ def _set_session_cookie(response: Response, token: str, expires_at: datetime) ->
         max_age=session_max_age(expires_at),
         httponly=True,
         secure=cookie_secure(),
-        samesite="lax",
+        samesite=cookie_samesite(),
         path="/api",
     )
 

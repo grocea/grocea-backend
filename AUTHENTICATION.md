@@ -6,10 +6,12 @@ rotation live under `/api/auth`; product handlers continue to receive the
 authenticated `User` through `CurrentUser`.
 
 The browser receives a host-only `grocea_session` cookie (`HttpOnly`,
-`SameSite=Lax`, `Path=/api`, 30-day lifetime). PostgreSQL stores only its
+`SameSite=Lax` by default, `Path=/api`, 30-day lifetime). Set
+`AUTH_COOKIE_SAMESITE=none` only when the PWA and API use different sites; this
+requires HTTPS and remains protected by exact credentialed CORS, Origin
+validation, and the session's `X-CSRF-Token`. PostgreSQL stores only its
 SHA-256 digest. Argon2id hashes passwords; the accepted password length is
-15–128 characters without trimming or composition rules. Unsafe authenticated
-requests require the session's `X-CSRF-Token` and an allowed `Origin`.
+15–128 characters without trimming or composition rules.
 
 Fresh databases seed global catalog data only. Before exposing registration for
 an existing installation, back up the database and run

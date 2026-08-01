@@ -4,6 +4,7 @@ from collections.abc import Iterator
 
 from sqlalchemy import Engine, MetaData, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from grocea.config import get_settings
 
@@ -23,7 +24,11 @@ class Base(DeclarativeBase):
 def build_engine(database_url: str) -> Engine:
     return create_engine(
         database_url,
-        connect_args={"options": "-c timezone=UTC"},
+        connect_args={
+            "options": "-c timezone=UTC",
+            "prepare_threshold": None,
+        },
+        poolclass=NullPool,
         pool_pre_ping=True,
     )
 
