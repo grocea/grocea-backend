@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     Numeric,
     SmallInteger,
     String,
@@ -42,13 +43,39 @@ class User(TimestampMixin, Base):
             name="preferred_servings",
         ),
         CheckConstraint("measurement_system = 'metric'", name="measurement_system"),
+        Index(
+            "uq_users_normalized_email",
+            "normalized_email",
+            unique=True,
+            postgresql_where=text("normalized_email IS NOT NULL"),
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    normalized_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
     preferred_servings: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     measurement_system: Mapped[str] = mapped_column(String(16), nullable=False, server_default="metric")
     state_revision: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+    __table_args__ = (
+        Index("ix_auth_sessions_user_id", "user_id"),
+        Index("ix_auth_sessions_expires_at", "expires_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    token_hash: Mapped[bytes] = mapped_column(LargeBinary(32), nullable=False, unique=True)
+    csrf_token: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class Category(TimestampMixin, Base):
@@ -335,7 +362,9 @@ class GroceryListItemSource(Base):
 
 class ProcessedMutation(Base):
     __tablename__ = "processed_mutations"
-    __table_args__ = (UniqueConstraint("device_id", "mutation_id", name="uq_processed_mutations_device_mutation"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "device_id", "mutation_id", name="uq_processed_mutations_user_device_mutation"),
+    )
 
     id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(

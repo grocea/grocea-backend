@@ -1,8 +1,9 @@
 # Grocea Backend
 
-Local-only Phase 0 API for Grocea. Backend owns Local Profile, global/custom
-catalog, exact Pantry Stock, Recipe drafts and publishing, cooking, immutable
-Activity Events, reversals, idempotent offline mutations, and legacy PWA import.
+Grocea API with personal email/password accounts, opaque PostgreSQL-backed
+sessions, global/custom catalog, exact Pantry Stock, Recipe drafts and
+publishing, cooking, immutable Activity Events, reversals, idempotent offline
+mutations, and explicit legacy PWA import.
 
 ## Requirements
 
@@ -46,6 +47,7 @@ excluded from request history.
 ```bash
 uv run grocea migrate
 uv run grocea seed
+uv run grocea claim-local-profile --email you@example.com
 uv run grocea export-openapi
 uv run grocea reset --yes
 
@@ -64,10 +66,22 @@ Integration tests use `TEST_DATABASE_URL` and refuse databases not named
 
 ## API boundary
 
-All application routes live under `/api`. The API always resolves requests to
-the stable seeded Local Profile; there is no Phase 0 authentication. Never bind
-this server publicly. The unauthenticated developer landing, documentation, and
-log console are subject to the same restriction.
+All application routes live under `/api`. Product routes require an authenticated
+account session in the `grocea_session` HttpOnly cookie and an in-memory
+`X-CSRF-Token` for unsafe requests. Sessions store only a SHA-256 token digest;
+passwords use Argon2id. Cookies are host-only, `SameSite=Lax`, scoped to `/api`,
+and Secure outside local/test environments. Auth responses are `no-store`.
+
+`GET /api/health/live` and `GET /api/health/ready` remain public and minimal.
+Developer landing, documentation, and log surfaces are local-only. Configure
+exact credentialed `CORS_ORIGINS` and `TRUSTED_HOSTS` before deployment; keep the
+API behind same-origin TLS and ingress throttling.
+
+Fresh databases seed only global catalog data. Existing installations must be
+backed up and claimed once with `grocea claim-local-profile --email ...` before
+public registration is enabled; the command prompts twice and never accepts a
+password argument. Claiming preserves the stable legacy user ID and all owned
+foreign-key data.
 
 The committed `openapi/openapi.json` file is the handoff contract for the PWA.
 Regenerate it after intentional API changes.

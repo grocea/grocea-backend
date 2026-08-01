@@ -30,11 +30,17 @@ def error_response(
     request: Request, status_code: int, code: str, message: str, details: dict[str, object]
 ) -> JSONResponse:
     request_id = get_request_id(request)
-    return JSONResponse(
+    headers = {"X-Request-ID": str(request_id)}
+    if request.url.path.startswith("/api/auth/"):
+        headers["Cache-Control"] = "no-store"
+    response = JSONResponse(
         status_code=status_code,
         content={"code": code, "message": message, "details": details, "request_id": str(request_id)},
-        headers={"X-Request-ID": str(request_id)},
+        headers=headers,
     )
+    if code == "AUTHENTICATION_REQUIRED":
+        response.delete_cookie("grocea_session", path="/api")
+    return response
 
 
 def install_exception_handlers(app: FastAPI) -> None:
@@ -69,9 +75,12 @@ def install_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
-        logger.exception(
-            "Unhandled request error",
-            exc_info=exc,
-            extra={"request_id": str(get_request_id(request))},
-        )
+        if request.url.path.startswith("/api/auth/"):
+            logger.error("Unhandled auth request error request_id=%s", get_request_id(request))
+        else:
+            logger.exception(
+                "Unhandled request error",
+                exc_info=exc,
+                extra={"request_id": str(get_request_id(request))},
+            )
         return error_response(request, 500, "INTERNAL_ERROR", "An unexpected error occurred.", {})

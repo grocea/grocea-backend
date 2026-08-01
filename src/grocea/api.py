@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from grocea.constants import LOCAL_USER_ID
 from grocea.dependencies import CurrentUser, DbSession, MutationRequest
 from grocea.errors import DomainError
 from grocea.full_services import (
@@ -45,7 +44,7 @@ from grocea.full_services import (
 from grocea.full_services import (
     delete_recipe as delete_recipe_service,
 )
-from grocea.models import ActivityEvent, ProcessedMutation, User
+from grocea.models import ActivityEvent, Category, Ingredient, ProcessedMutation, Recipe, User
 from grocea.schemas import (
     ActivityResponse,
     BasketItemUpsert,
@@ -100,6 +99,7 @@ from grocea.services import (
 router = APIRouter(
     prefix="/api",
     responses={
+        401: {"model": ErrorResponse},
         403: {"model": ErrorResponse},
         404: {"model": ErrorResponse},
         409: {"model": ErrorResponse},
@@ -122,6 +122,7 @@ def apply_mutation[ResponseModel: BaseModel](
 ) -> ResponseModel:
     cached = session.scalar(
         select(ProcessedMutation).where(
+            ProcessedMutation.user_id == user.id,
             ProcessedMutation.device_id == mutation.device_id,
             ProcessedMutation.mutation_id == mutation.mutation_id,
         )
@@ -168,8 +169,12 @@ def live() -> HealthResponse:
 def ready(session: DbSession) -> HealthResponse:
     try:
         session.execute(select(1))
-        if session.get(User, LOCAL_USER_ID) is None:
-            raise DomainError(503, "LOCAL_PROFILE_NOT_SEEDED", "Local Profile has not been seeded.")
+        if (
+            session.scalar(select(Category.id).limit(1)) is None
+            or session.scalar(select(Ingredient.id).limit(1)) is None
+            or session.scalar(select(Recipe.id).limit(1)) is None
+        ):
+            raise DomainError(503, "GLOBAL_CATALOG_NOT_SEEDED", "Global catalog has not been seeded.")
     except DomainError:
         raise
     except SQLAlchemyError as exc:

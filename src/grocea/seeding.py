@@ -10,9 +10,8 @@ from pydantic import BaseModel, ConfigDict, TypeAdapter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from grocea.constants import LOCAL_USER_ID
 from grocea.db import engine
-from grocea.models import Category, Ingredient, Recipe, RecipeIngredient, RecipeStep, User
+from grocea.models import Category, Ingredient, Recipe, RecipeIngredient, RecipeStep
 from grocea.normalization import normalize_name
 
 
@@ -79,18 +78,6 @@ def load_recipes() -> list[SeedRecipe]:
 
 
 def apply_seed(session: Session) -> None:
-    user = session.get(User, LOCAL_USER_ID)
-    if user is None:
-        session.add(
-            User(
-                id=LOCAL_USER_ID,
-                display_name="Grocie Crumbsworth",
-                preferred_servings=2,
-                measurement_system="metric",
-            )
-        )
-        session.flush()
-
     category_ids: dict[str, UUID] = {}
     for category_seed in load_categories():
         normalized = normalize_name(category_seed.name)

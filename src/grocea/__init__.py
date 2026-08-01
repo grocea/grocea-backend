@@ -1,3 +1,3 @@
-"""Grocea Phase 0 backend."""
+"""Grocea authenticated backend."""
 
 __version__ = "0.1.0"

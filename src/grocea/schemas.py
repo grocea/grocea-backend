@@ -6,9 +6,30 @@ from enum import StrEnum
 from typing import Annotated, Literal, Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, StringConstraints, model_validator
+from email_validator import EmailNotValidError
+from email_validator import validate_email as validate_email_address
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PlainSerializer, StringConstraints, model_validator
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+Password = Annotated[str, StringConstraints(min_length=15, max_length=128)]
+LoginPassword = Annotated[str, StringConstraints(max_length=128)]
+
+
+def _validate_email(value: str) -> str:
+    candidate = value.strip()
+    try:
+        validate_email_address(candidate, check_deliverability=False)
+    except EmailNotValidError as error:
+        raise ValueError(str(error)) from error
+    return candidate
+
+
+EmailAddress = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=3, max_length=320),
+    Field(json_schema_extra={"format": "email"}),
+    AfterValidator(_validate_email),
+]
 SerializedDecimal = Annotated[Decimal, PlainSerializer(lambda value: f"{value:.3f}", return_type=str)]
 
 
@@ -25,6 +46,33 @@ class ScopeFilter(StrEnum):
     ALL = "all"
     GLOBAL = "global"
     CUSTOM = "custom"
+
+
+class AuthRegisterRequest(ApiModel):
+    email: EmailAddress
+    password: Password
+    display_name: Name
+
+
+class AuthLoginRequest(ApiModel):
+    email: EmailAddress
+    password: LoginPassword
+
+
+class AuthPasswordChangeRequest(ApiModel):
+    current_password: LoginPassword
+    new_password: Password
+
+
+class AuthAccountResponse(ApiModel):
+    id: UUID
+    email: str
+
+
+class AuthSessionResponse(ApiModel):
+    account: AuthAccountResponse
+    csrf_token: str
+    expires_at: datetime
 
 
 class MeasurementFamily(StrEnum):

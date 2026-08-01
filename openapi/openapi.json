@@ -101,6 +101,126 @@
         "title": "ActivityResponse",
         "type": "object"
       },
+      "AuthAccountResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email"
+        ],
+        "title": "AuthAccountResponse",
+        "type": "object"
+      },
+      "AuthLoginRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 128,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "AuthLoginRequest",
+        "type": "object"
+      },
+      "AuthPasswordChangeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "current_password": {
+            "maxLength": 128,
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 128,
+            "minLength": 15,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "AuthPasswordChangeRequest",
+        "type": "object"
+      },
+      "AuthRegisterRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 15,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "display_name"
+        ],
+        "title": "AuthRegisterRequest",
+        "type": "object"
+      },
+      "AuthSessionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AuthAccountResponse"
+          },
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "csrf_token",
+          "expires_at"
+        ],
+        "title": "AuthSessionResponse",
+        "type": "object"
+      },
       "BasketItemResponse": {
         "additionalProperties": false,
         "properties": {
@@ -929,6 +1049,19 @@
         "title": "GroceryListUpdate",
         "type": "object"
       },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
       "HealthResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1746,10 +1879,58 @@
         ],
         "title": "Unit",
         "type": "string"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "GroceaSessionCookie": {
+        "in": "cookie",
+        "name": "grocea_session",
+        "type": "apiKey"
       }
     }
   },
   "info": {
+    "description": "Grocea authenticated API",
     "title": "Grocea API",
     "version": "0.1.0"
   },
@@ -1758,6 +1939,24 @@
     "/api/activity": {
       "get": {
         "operationId": "read_activity_api_activity_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1772,6 +1971,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -1824,6 +2033,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Activity",
         "tags": [
           "activity"
@@ -1843,6 +2057,22 @@
               "title": "Event Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
           }
         ],
         "responses": {
@@ -1855,6 +2085,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -1907,6 +2147,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Activity Event",
         "tags": [
           "activity"
@@ -1944,6 +2189,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1966,6 +2235,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2018,9 +2297,427 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Activity Reverse",
         "tags": [
           "activity"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "logout_api_auth_logout_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/password": {
+      "patch": {
+        "operationId": "update_password_api_auth_password_patch",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthPasswordChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
+        "summary": "Update Password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "register_api_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/session": {
+      "get": {
+        "operationId": "read_session_api_auth_session_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
+        "summary": "Read Session",
+        "tags": [
+          "auth"
         ]
       }
     },
@@ -2045,6 +2742,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2057,6 +2778,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2109,6 +2840,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Delete Basket",
         "tags": [
           "basket"
@@ -2146,6 +2882,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2158,6 +2918,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2210,6 +2980,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Delete Basket Recipe",
         "tags": [
           "basket"
@@ -2245,6 +3020,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2267,6 +3066,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2319,6 +3128,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Put Basket Recipe",
         "tags": [
           "basket"
@@ -2364,6 +3178,22 @@
               "title": "Include Archived",
               "type": "boolean"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
           }
         ],
         "responses": {
@@ -2380,6 +3210,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2432,6 +3272,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Categories",
         "tags": [
           "categories"
@@ -2457,6 +3302,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2479,6 +3348,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2531,6 +3410,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Category",
         "tags": [
           "categories"
@@ -2568,6 +3452,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2580,6 +3488,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2632,6 +3550,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Delete Category",
         "tags": [
           "categories"
@@ -2649,6 +3572,22 @@
               "title": "Category Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
           }
         ],
         "responses": {
@@ -2661,6 +3600,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2713,6 +3662,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Category",
         "tags": [
           "categories"
@@ -2748,6 +3702,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2770,6 +3748,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2822,6 +3810,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Patch Category",
         "tags": [
           "categories"
@@ -2859,6 +3852,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2871,6 +3888,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -2923,6 +3950,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Category Restore",
         "tags": [
           "categories"
@@ -2932,6 +3964,24 @@
     "/api/grocery-lists": {
       "get": {
         "operationId": "read_grocery_lists_api_grocery_lists_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -2947,6 +3997,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -2998,6 +4058,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Grocery Lists",
         "tags": [
           "grocery-lists"
@@ -3025,6 +4090,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3047,6 +4136,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3099,6 +4198,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Grocery List From Basket",
         "tags": [
           "grocery-lists"
@@ -3146,6 +4250,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3158,6 +4286,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3210,6 +4348,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Delete Grocery List Route",
         "tags": [
           "grocery-lists"
@@ -3227,6 +4370,22 @@
               "title": "Grocery List Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
           }
         ],
         "responses": {
@@ -3239,6 +4398,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3291,6 +4460,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Grocery List",
         "tags": [
           "grocery-lists"
@@ -3326,6 +4500,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3348,6 +4546,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3400,6 +4608,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Patch Grocery List",
         "tags": [
           "grocery-lists"
@@ -3437,6 +4650,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3459,6 +4696,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3511,6 +4758,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Grocery List Complete",
         "tags": [
           "grocery-lists"
@@ -3548,6 +4800,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3570,6 +4846,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3622,6 +4908,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Grocery List Item",
         "tags": [
           "grocery-lists"
@@ -3669,6 +4960,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3681,6 +4996,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3733,6 +5058,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Delete Grocery List Item",
         "tags": [
           "grocery-lists"
@@ -3778,6 +5108,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3800,6 +5154,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3852,6 +5216,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Put Grocery List Item",
         "tags": [
           "grocery-lists"
@@ -3889,6 +5258,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3901,6 +5294,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -3953,6 +5356,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Grocery List Reuse",
         "tags": [
           "grocery-lists"
@@ -3972,6 +5380,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4043,6 +5461,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4122,6 +5550,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4144,6 +5596,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4196,6 +5658,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Local Import",
         "tags": [
           "sync"
@@ -4281,6 +5748,22 @@
               "title": "Offset",
               "type": "integer"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
           }
         ],
         "responses": {
@@ -4293,6 +5776,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4345,6 +5838,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Ingredients",
         "tags": [
           "ingredients"
@@ -4370,6 +5868,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4392,6 +5914,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4444,6 +5976,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Ingredient",
         "tags": [
           "ingredients"
@@ -4481,6 +6018,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4493,6 +6054,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4545,6 +6116,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Delete Ingredient",
         "tags": [
           "ingredients"
@@ -4562,6 +6138,22 @@
               "title": "Ingredient Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
           }
         ],
         "responses": {
@@ -4574,6 +6166,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4626,6 +6228,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Ingredient",
         "tags": [
           "ingredients"
@@ -4661,6 +6268,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4683,6 +6314,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4735,6 +6376,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Patch Ingredient",
         "tags": [
           "ingredients"
@@ -4772,6 +6418,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4784,6 +6454,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -4836,6 +6516,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Ingredient Restore",
         "tags": [
           "ingredients"
@@ -4845,6 +6530,24 @@
     "/api/pantry-stocks": {
       "get": {
         "operationId": "read_pantry_stocks_api_pantry_stocks_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -4860,6 +6563,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -4911,6 +6624,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Pantry Stocks",
         "tags": [
           "pantry"
@@ -4948,6 +6666,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4971,6 +6713,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -5022,6 +6774,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Stock Operation",
         "tags": [
           "pantry"
@@ -5031,6 +6788,24 @@
     "/api/profile": {
       "get": {
         "operationId": "read_profile_api_profile_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5042,6 +6817,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -5093,6 +6878,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Profile",
         "tags": [
           "profile"
@@ -5118,6 +6908,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -5141,6 +6955,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -5192,6 +7016,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Patch Profile",
         "tags": [
           "profile"
@@ -5201,6 +7030,24 @@
     "/api/recipes": {
       "get": {
         "operationId": "read_recipes_api_recipes_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5216,6 +7063,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -5267,6 +7124,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Recipes",
         "tags": [
           "recipes"
@@ -5292,6 +7154,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -5314,6 +7200,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -5366,6 +7262,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Recipe",
         "tags": [
           "recipes"
@@ -5403,6 +7304,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -5415,6 +7340,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -5467,6 +7402,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Delete Recipe",
         "tags": [
           "recipes"
@@ -5484,6 +7424,22 @@
               "title": "Recipe Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
           }
         ],
         "responses": {
@@ -5496,6 +7452,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -5548,6 +7514,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read Recipe",
         "tags": [
           "recipes"
@@ -5583,6 +7554,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -5605,6 +7600,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -5657,6 +7662,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Patch Recipe",
         "tags": [
           "recipes"
@@ -5694,6 +7704,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -5716,6 +7750,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
           },
           "403": {
             "content": {
@@ -5768,6 +7812,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Recipe Cook",
         "tags": [
           "recipes"
@@ -5805,6 +7854,30 @@
               "title": "X-Device-Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -5818,6 +7891,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -5869,6 +7952,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Post Recipe Publish",
         "tags": [
           "recipes"
@@ -5878,6 +7966,24 @@
     "/api/state": {
       "get": {
         "operationId": "read_state_api_state_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "grocea_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grocea Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5889,6 +7995,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -5940,6 +8056,11 @@
             "description": "Service Unavailable"
           }
         },
+        "security": [
+          {
+            "GroceaSessionCookie": []
+          }
+        ],
         "summary": "Read State",
         "tags": [
           "sync"

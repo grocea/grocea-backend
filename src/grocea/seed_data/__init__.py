@@ -1,1 +1,1 @@
-"""Reviewed Phase 0 seed manifests."""
+"""Reviewed global catalog seed manifests."""

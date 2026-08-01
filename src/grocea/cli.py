@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import make_url, text
+from sqlalchemy.orm import Session
 
+from grocea.auth import claim_legacy_profile
 from grocea.config import get_settings
+from grocea.constants import LOCAL_USER_ID
 from grocea.db import build_engine
 from grocea.main import app
 from grocea.seeding import seed_database
@@ -55,11 +59,29 @@ def export_openapi() -> None:
     print(destination)
 
 
+def claim_local_profile_account(email: str) -> None:
+    first = getpass.getpass("New account password: ")
+    second = getpass.getpass("Repeat account password: ")
+    if first != second:
+        raise SystemExit("Passwords do not match")
+    engine = build_engine(get_settings().database_url)
+    with Session(engine) as session:
+        try:
+            claim_legacy_profile(session, legacy_user_id=LOCAL_USER_ID, email=email, password=first)
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+    engine.dispose()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="grocea")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("migrate", help="Apply all database migrations")
-    subparsers.add_parser("seed", help="Idempotently seed the local profile and global catalog")
+    subparsers.add_parser("seed", help="Idempotently seed the global catalog")
+    claim = subparsers.add_parser("claim-local-profile", help="Attach credentials to the legacy Local Profile")
+    claim.add_argument("--email", required=True, help="Account email")
     reset = subparsers.add_parser("reset", help="Recreate, migrate, and seed the local schema")
     reset.add_argument("--yes", action="store_true", help="Confirm destructive reset")
     subparsers.add_parser("export-openapi", help="Write the committed OpenAPI contract")
@@ -72,6 +94,8 @@ def main() -> None:
         migrate()
     elif args.command == "seed":
         seed_database()
+    elif args.command == "claim-local-profile":
+        claim_local_profile_account(args.email)
     elif args.command == "reset":
         reset_database(args.yes)
     elif args.command == "export-openapi":
