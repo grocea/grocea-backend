@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import Cookie, Depends, Header, Request, Response
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from grocea.auth import SESSION_COOKIE_NAME, resolve_session
