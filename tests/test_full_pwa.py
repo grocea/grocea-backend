@@ -10,6 +10,43 @@ def _ingredient_id(client: TestClient, name: str) -> str:
     return str(next(item["id"] for item in response.json()["items"] if item["name"] == name))
 
 
+def test_expected_revision_rejects_stale_mutations_and_preserves_replays(client: TestClient) -> None:
+    rice_id = _ingredient_id(client, "Basmati rice")
+    expected_revision = client.get("/api/state").json()["revision"]
+    mutation_id = str(uuid4())
+    payload = {
+        "event_id": str(uuid4()),
+        "operation": "add",
+        "amount": "1.000",
+        "reason": "Revision test",
+    }
+    headers = {
+        "Idempotency-Key": mutation_id,
+        "X-Expected-State-Revision": str(expected_revision),
+    }
+
+    first = client.post(f"/api/pantry-stocks/{rice_id}/operations", json=payload, headers=headers)
+    replay = client.post(f"/api/pantry-stocks/{rice_id}/operations", json=payload, headers=headers)
+    stale = client.patch(
+        "/api/profile",
+        json={"display_name": "Stale update", "preferred_servings": 2},
+        headers={
+            "Idempotency-Key": str(uuid4()),
+            "X-Expected-State-Revision": str(expected_revision),
+        },
+    )
+
+    assert first.status_code == 201
+    assert replay.status_code == 201
+    assert replay.headers["X-Idempotent-Replay"] == "true"
+    assert stale.status_code == 409
+    assert stale.json()["code"] == "STATE_REVISION_CONFLICT"
+    assert stale.json()["details"] == {
+        "expected_revision": expected_revision,
+        "current_revision": expected_revision + 1,
+    }
+
+
 def test_recipe_stock_cook_reverse_and_idempotency(client: TestClient) -> None:
     rice_id = _ingredient_id(client, "Basmati rice")
     stock_event_id = str(uuid4())

@@ -120,6 +120,10 @@ def apply_mutation[ResponseModel: BaseModel](
     *,
     imported: bool = False,
 ) -> ResponseModel:
+    locked_user = session.scalar(select(User).where(User.id == user.id).with_for_update())
+    if locked_user is None:
+        raise DomainError(401, "AUTHENTICATION_REQUIRED", "Authentication is required.")
+    user = locked_user
     cached = session.scalar(
         select(ProcessedMutation).where(
             ProcessedMutation.user_id == user.id,
@@ -133,6 +137,16 @@ def apply_mutation[ResponseModel: BaseModel](
         response.headers["X-State-Revision"] = str(cached.revision)
         response.headers["X-Idempotent-Replay"] = "true"
         return response_model.model_validate(cached.response_body)
+    if mutation.expected_state_revision is not None and mutation.expected_state_revision != user.state_revision:
+        raise DomainError(
+            409,
+            "STATE_REVISION_CONFLICT",
+            "The account changed on another device.",
+            {
+                "expected_revision": mutation.expected_state_revision,
+                "current_revision": user.state_revision,
+            },
+        )
     result = operation()
     user.state_revision += 1
     if hasattr(result, "revision"):

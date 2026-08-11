@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import Cookie, Depends, Header, Request, Response
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from grocea.auth import SESSION_COOKIE_NAME, resolve_session
@@ -65,11 +66,13 @@ class MutationHeaders:
         self,
         idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
         device_id: Annotated[str, Header(alias="X-Device-ID")],
+        expected_state_revision: Annotated[int | None, Header(alias="X-Expected-State-Revision", ge=0)] = None,
     ) -> None:
         from uuid import UUID
 
         self.mutation_id = UUID(idempotency_key)
         self.device_id = UUID(device_id)
+        self.expected_state_revision = expected_state_revision
 
 
 MutationRequest = Annotated[MutationHeaders, Depends()]

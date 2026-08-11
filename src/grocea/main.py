@@ -50,7 +50,14 @@ def create_app() -> FastAPI:
         allow_origins=settings.cors_origin_list,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "X-Request-ID", "Idempotency-Key", "X-Device-ID", "X-CSRF-Token"],
+        allow_headers=[
+            "Content-Type",
+            "X-Request-ID",
+            "Idempotency-Key",
+            "X-Device-ID",
+            "X-CSRF-Token",
+            "X-Expected-State-Revision",
+        ],
         expose_headers=["X-Request-ID", "X-State-Revision", "X-Idempotent-Replay"],
     )
     install_exception_handlers(application)
