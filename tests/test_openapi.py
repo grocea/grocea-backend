@@ -3,7 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from grocea.main import app
+import pytest
+
+import grocea.main as main
+from grocea.config import Settings
+
+app = main.app
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -51,3 +56,10 @@ def test_openapi_exposes_full_pwa_paths() -> None:
         "/api/activity/{event_id}/reverse",
         "/api/imports/local-state",
     }
+
+
+def test_production_rejects_local_security_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(main, "get_settings", lambda: Settings(app_env="production"))
+
+    with pytest.raises(RuntimeError, match="TRUSTED_HOSTS and CORS_ORIGINS"):
+        main.create_app()

@@ -77,6 +77,27 @@ FAMILY_UNITS = {
 }
 
 
+def _import_datetime(
+    value: object,
+    fallback: datetime | None,
+    conflicts: list[dict[str, str]],
+    *,
+    kind: str,
+    local_id: str,
+    field: str,
+) -> datetime | None:
+    if value is None:
+        return fallback
+    if not isinstance(value, str):
+        conflicts.append({"kind": kind, "local_id": local_id, "message": f"{field} is not a valid timestamp."})
+        return fallback
+    try:
+        return datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        conflicts.append({"kind": kind, "local_id": local_id, "message": f"{field} is not a valid timestamp."})
+        return fallback
+
+
 def _scope(user_id: UUID | None) -> Scope:
     return Scope.GLOBAL if user_id is None else Scope.CUSTOM
 
@@ -1327,14 +1348,24 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
                 event_type=raw.get("type") if raw.get("type") in {"cooking", "manual", "reversal"} else "manual",
                 title=raw.get("title") if isinstance(raw.get("title"), str) else "Imported activity",
                 detail=raw.get("detail") if isinstance(raw.get("detail"), str) else "Imported from this device",
-                occurred_at=datetime.fromisoformat(raw["occurredAt"])
-                if isinstance(raw.get("occurredAt"), str)
-                else datetime.now(UTC),
+                occurred_at=_import_datetime(
+                    raw.get("occurredAt"),
+                    datetime.now(UTC),
+                    conflicts,
+                    kind="activity",
+                    local_id=local_id,
+                    field="occurredAt",
+                ) or datetime.now(UTC),
                 recipe_id=id_map.get(raw["recipeId"]) if isinstance(raw.get("recipeId"), str) else None,
                 servings=raw.get("servings") if isinstance(raw.get("servings"), int) else None,
-                reversed_at=datetime.fromisoformat(raw["reversedAt"])
-                if isinstance(raw.get("reversedAt"), str)
-                else None,
+                reversed_at=_import_datetime(
+                    raw.get("reversedAt"),
+                    None,
+                    conflicts,
+                    kind="activity",
+                    local_id=local_id,
+                    field="reversedAt",
+                ),
             )
             session.add(event)
             session.flush()
@@ -1434,16 +1465,29 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
                         }
                     )
                     continue
-                created_at = (
-                    datetime.fromisoformat(raw["createdAt"])
-                    if isinstance(raw.get("createdAt"), str)
-                    else datetime.now(UTC)
-                )
-                updated_at = (
-                    datetime.fromisoformat(raw["updatedAt"]) if isinstance(raw.get("updatedAt"), str) else created_at
-                )
-                completed_at = (
-                    datetime.fromisoformat(raw["completedAt"]) if isinstance(raw.get("completedAt"), str) else None
+                created_at = _import_datetime(
+                    raw.get("createdAt"),
+                    datetime.now(UTC),
+                    conflicts,
+                    kind="grocery-list",
+                    local_id=local_list_id,
+                    field="createdAt",
+                ) or datetime.now(UTC)
+                updated_at = _import_datetime(
+                    raw.get("updatedAt"),
+                    created_at,
+                    conflicts,
+                    kind="grocery-list",
+                    local_id=local_list_id,
+                    field="updatedAt",
+                ) or created_at
+                completed_at = _import_datetime(
+                    raw.get("completedAt"),
+                    None,
+                    conflicts,
+                    kind="grocery-list",
+                    local_id=local_list_id,
+                    field="completedAt",
                 )
                 grocery_list = GroceryList(
                     id=grocery_list_id,
@@ -1549,16 +1593,22 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
                             original_required=original_required,
                             original_pantry=original_pantry,
                             original_quantity=original_quantity,
-                            created_at=(
-                                datetime.fromisoformat(raw_item["createdAt"])
-                                if isinstance(raw_item.get("createdAt"), str)
-                                else created_at
-                            ),
-                            updated_at=(
-                                datetime.fromisoformat(raw_item["updatedAt"])
-                                if isinstance(raw_item.get("updatedAt"), str)
-                                else updated_at
-                            ),
+                            created_at=_import_datetime(
+                                raw_item.get("createdAt"),
+                                created_at,
+                                conflicts,
+                                kind="grocery-item",
+                                local_id=local_item_id,
+                                field="createdAt",
+                            ) or created_at,
+                            updated_at=_import_datetime(
+                                raw_item.get("updatedAt"),
+                                updated_at,
+                                conflicts,
+                                kind="grocery-item",
+                                local_id=local_item_id,
+                                field="updatedAt",
+                            ) or updated_at,
                         )
                         session.add(item)
                         session.flush()

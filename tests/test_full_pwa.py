@@ -234,3 +234,33 @@ def test_import_maps_legacy_ids_and_is_idempotent(client: TestClient) -> None:
     }
     assert state["grocery_lists"][0]["id"] == grocery_list_id
     assert state["grocery_lists"][0]["items"][0]["ingredient_id"] == rice_id
+
+
+def test_import_invalid_timestamps_become_conflicts_instead_of_500(client: TestClient) -> None:
+    response = client.post(
+        "/api/imports/local-state",
+        headers={"Idempotency-Key": str(uuid4())},
+        json={
+            "import_id": str(uuid4()),
+            "state": {
+                "ingredients": [{
+                    "id": "rice",
+                    "name": "Basmati rice",
+                    "categoryId": "pantry",
+                    "family": "mass",
+                    "scope": "global",
+                }],
+                "activity": [{
+                    "id": "legacy-event",
+                    "type": "manual",
+                    "title": "Added rice",
+                    "detail": "Imported",
+                    "occurredAt": "not-a-timestamp",
+                    "changes": [{"ingredientId": "rice", "before": "0", "delta": "1000", "after": "1000"}],
+                }],
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert any(conflict["kind"] == "activity" for conflict in response.json()["conflicts"])

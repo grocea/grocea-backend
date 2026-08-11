@@ -23,8 +23,7 @@ logger = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    # is_local = settings.app_env in {"local", "test"}
-    is_local = True
+    is_local = settings.app_env in {"local", "test"}
     default_hosts = {"localhost", "127.0.0.1", "::1", "testserver"}
     if not is_local and (
         not settings.trusted_host_list

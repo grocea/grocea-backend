@@ -2191,6 +2191,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -2744,6 +2761,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -2884,6 +2918,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -3019,6 +3070,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -3304,6 +3372,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -3451,6 +3536,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -3704,6 +3806,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -3851,6 +3970,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -4092,6 +4228,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -4249,6 +4402,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -4502,6 +4672,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -4652,6 +4839,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -4799,6 +5003,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -4962,6 +5183,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -5107,6 +5345,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -5257,6 +5512,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -5549,6 +5821,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -5870,6 +6159,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -6017,6 +6323,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -6270,6 +6593,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -6417,6 +6757,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -6668,6 +7025,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -6907,6 +7281,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -7156,6 +7547,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -7303,6 +7711,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
@@ -7556,6 +7981,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -7706,6 +8148,23 @@
             }
           },
           {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
+            }
+          },
+          {
             "in": "cookie",
             "name": "grocea_session",
             "required": false,
@@ -7853,6 +8312,23 @@
             "schema": {
               "title": "X-Device-Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Expected-State-Revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Expected-State-Revision"
             }
           },
           {
