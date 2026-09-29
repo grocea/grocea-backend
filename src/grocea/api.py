@@ -68,6 +68,7 @@ from grocea.schemas import (
     LocalImportRequest,
     LocalImportResponse,
     PantryStockResponse,
+    PantryTrackingUpdate,
     ProfileResponse,
     ProfileUpdate,
     RecipeCreate,
@@ -91,6 +92,7 @@ from grocea.services import (
     profile_response,
     restore_category,
     restore_ingredient,
+    set_pantry_tracking,
     update_category,
     update_ingredient,
     update_profile,
@@ -440,6 +442,26 @@ def read_state(session: DbSession, user: CurrentUser, response: Response) -> Sta
 @router.get("/pantry-stocks", response_model=list[PantryStockResponse], tags=["pantry"])
 def read_pantry_stocks(session: DbSession, user: CurrentUser) -> list[PantryStockResponse]:
     return list_pantry_stocks(session, user)
+
+
+@router.put("/pantry-stocks/{ingredient_id}/tracking", response_model=IngredientResponse, tags=["pantry"])
+def put_pantry_tracking(
+    ingredient_id: UUID,
+    payload: PantryTrackingUpdate,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> IngredientResponse:
+    return apply_mutation(
+        session,
+        user,
+        mutation,
+        response,
+        "pantry.tracking",
+        IngredientResponse,
+        lambda: set_pantry_tracking(session, user, ingredient_id, payload),
+    )
 
 
 @router.post(

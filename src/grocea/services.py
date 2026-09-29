@@ -21,6 +21,7 @@ from grocea.schemas import (
     IngredientResponse,
     IngredientUpdate,
     MeasurementFamily,
+    PantryTrackingUpdate,
     ProfileResponse,
     ProfileUpdate,
     Scope,
@@ -300,6 +301,32 @@ def list_ingredients(
 def get_ingredient(session: Session, user: User, ingredient_id: UUID) -> IngredientResponse:
     ingredient = get_ingredient_model(session, user, ingredient_id)
     return ingredient_response(ingredient, _is_tracked(session, user, ingredient.id))
+
+
+def set_pantry_tracking(
+    session: Session,
+    user: User,
+    ingredient_id: UUID,
+    payload: PantryTrackingUpdate,
+) -> IngredientResponse:
+    ingredient = get_ingredient_model(session, user, ingredient_id)
+    if ingredient.archived_at is not None:
+        raise DomainError(409, "INGREDIENT_ARCHIVED", "Restore Ingredient before tracking it.")
+
+    stock = session.scalar(
+        select(PantryStock).where(
+            PantryStock.user_id == user.id,
+            PantryStock.ingredient_id == ingredient.id,
+        )
+    )
+    if payload.tracked and stock is None:
+        session.add(PantryStock(user_id=user.id, ingredient_id=ingredient.id, quantity=Decimal("0.000")))
+    elif not payload.tracked and stock is not None:
+        if stock.quantity != Decimal("0.000"):
+            raise DomainError(409, "PANTRY_STOCK_NOT_ZERO", "Set Pantry Stock to zero before stopping tracking.")
+        session.delete(stock)
+    session.flush()
+    return ingredient_response(ingredient, payload.tracked)
 
 
 def create_ingredient(session: Session, user: User, payload: IngredientCreate) -> IngredientResponse:

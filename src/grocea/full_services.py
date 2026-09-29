@@ -1095,6 +1095,7 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
     raw_categories = payload.state.get("categories", [])
     raw_ingredients = payload.state.get("ingredients", [])
     raw_balances = payload.state.get("balances", {})
+    raw_tracked_ids = payload.state.get("trackedIngredientIds")
     raw_recipes = payload.state.get("recipes", [])
     raw_activity = payload.state.get("activity", [])
     raw_basket = payload.state.get("basket", [])
@@ -1200,8 +1201,18 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
                 )
 
     if isinstance(raw_balances, dict):
-        for local_id, raw_quantity in raw_balances.items():
-            if not isinstance(local_id, str) or not isinstance(raw_quantity, str):
+        # New clients send tracking separately because a zero balance can be
+        # either intentionally tracked or simply absent from the pantry.
+        # Older clients treated every balance entry as a pantry row, so keep
+        # that import behavior when the explicit field is not present.
+        tracked_local_ids = (
+            {local_id for local_id in raw_tracked_ids if isinstance(local_id, str)}
+            if isinstance(raw_tracked_ids, list)
+            else {local_id for local_id in raw_balances if isinstance(local_id, str)}
+        )
+        for local_id in tracked_local_ids:
+            raw_quantity = raw_balances.get(local_id, "0")
+            if not isinstance(raw_quantity, str):
                 continue
             ingredient_id = id_map.get(local_id)
             if ingredient_id is None:

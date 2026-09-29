@@ -22,10 +22,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "httpx>=0.28,<1",
   "mypy>=1.16,<2",
-  "pytest>=8.4,<9",
-  "pytest-cov>=6.2,<8",
   "ruff>=0.12,<1",
   "types-pyyaml>=6,<7",
 ]
@@ -38,10 +35,6 @@ entrypoint = "src.index:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/grocea"]
-
-[tool.pytest.ini_options]
-addopts = "--strict-config --strict-markers -q"
-testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120

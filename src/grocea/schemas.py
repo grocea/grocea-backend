@@ -199,6 +199,10 @@ class PantryStockResponse(ApiModel):
     updated_at: datetime
 
 
+class PantryTrackingUpdate(ApiModel):
+    tracked: bool
+
+
 class StockOperationCreate(ApiModel):
     event_id: UUID
     operation: StockOperation

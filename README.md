@@ -54,15 +54,11 @@ uv run grocea reset --yes
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src
-uv run pytest
 ```
 
 `reset --yes` is destructive. It refuses non-loopback hosts and database names
 other than `grocea` or `grocea_test`, recreates the `public` schema, then migrates
 and seeds it.
-
-Integration tests use `TEST_DATABASE_URL` and refuse databases not named
-`grocea_test`.
 
 ## Vercel + Supabase deployment
 
