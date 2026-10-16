@@ -1175,6 +1175,7 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
     raw_ingredients = payload.state.get("ingredients", [])
     raw_balances = payload.state.get("balances", {})
     raw_tracked_ids = payload.state.get("trackedIngredientIds")
+    raw_preferences = payload.state.get("pantryPreferences", {})
     raw_recipes = payload.state.get("recipes", [])
     raw_activity = payload.state.get("activity", [])
     raw_basket = payload.state.get("basket", [])
@@ -1310,7 +1311,8 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
                 )
             )
             if stock is None:
-                session.add(PantryStock(user_id=user.id, ingredient_id=ingredient_id, quantity=balance_quantity))
+                stock = PantryStock(user_id=user.id, ingredient_id=ingredient_id, quantity=balance_quantity)
+                session.add(stock)
             elif stock.quantity == Decimal("0.000") or stock.quantity == balance_quantity:
                 stock.quantity = balance_quantity
             else:
@@ -1321,6 +1323,37 @@ def import_local_state(session: Session, user: User, payload: LocalImportRequest
                         "message": "Backend Pantry Stock already has a different nonzero balance.",
                     }
                 )
+            if isinstance(raw_preferences, dict) and local_id in raw_preferences:
+                settings = raw_preferences[local_id]
+                try:
+                    if not isinstance(settings, dict):
+                        raise ValueError("Invalid preferences")
+                    parsed: dict[str, Decimal | None] = {}
+                    for key, attribute in (
+                        ("lowStockThreshold", "low_stock_threshold"), ("refillQuantity", "refill_quantity"),
+                    ):
+                        raw_value = settings.get(key)
+                        if raw_value is None:
+                            parsed[attribute] = None
+                            continue
+                        if not isinstance(raw_value, str) or not raw_value.isascii() or not raw_value.isdecimal():
+                            raise ValueError("Invalid quantity")
+                        minor = Decimal(raw_value)
+                        if minor > Decimal("999999999999999"):
+                            raise ValueError("Quantity out of range")
+                        parsed[attribute] = minor / Decimal(1000)
+                    if any(
+                        getattr(stock, key) is not None and getattr(stock, key) != value
+                        for key, value in parsed.items()
+                    ):
+                        conflicts.append({"kind": "pantryPreferences", "local_id": local_id,
+                                          "message": "Backend restock preferences differ; server settings were kept."})
+                    else:
+                        for key, value in parsed.items():
+                            setattr(stock, key, value)
+                except (ValueError, InvalidOperation):
+                    conflicts.append({"kind": "pantryPreferences", "local_id": local_id,
+                                      "message": "Restock preferences contain an invalid quantity."})
     session.flush()
 
     if isinstance(raw_recipes, list):

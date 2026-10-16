@@ -21,6 +21,8 @@ from grocea.schemas import (
     IngredientResponse,
     IngredientUpdate,
     MeasurementFamily,
+    PantryPreferencesUpdate,
+    PantryStockResponse,
     PantryTrackingUpdate,
     ProfileResponse,
     ProfileUpdate,
@@ -301,6 +303,25 @@ def list_ingredients(
 def get_ingredient(session: Session, user: User, ingredient_id: UUID) -> IngredientResponse:
     ingredient = get_ingredient_model(session, user, ingredient_id)
     return ingredient_response(ingredient, _is_tracked(session, user, ingredient.id))
+
+
+def set_pantry_preferences(
+    session: Session, user: User, ingredient_id: UUID, payload: PantryPreferencesUpdate,
+) -> PantryStockResponse:
+    ingredient = get_ingredient_model(session, user, ingredient_id)
+    if ingredient.archived_at is not None:
+        raise DomainError(409, "INGREDIENT_ARCHIVED", "Restore Ingredient before setting restock preferences.")
+    if ingredient.measurement_family != payload.measurement_family:
+        raise DomainError(422, "MEASUREMENT_FAMILY_MISMATCH", "Use the Ingredient's measurement family.")
+    stock = session.scalar(select(PantryStock).where(
+        PantryStock.user_id == user.id, PantryStock.ingredient_id == ingredient.id,
+    ))
+    if stock is None:
+        raise DomainError(409, "PANTRY_NOT_TRACKED", "Track this Ingredient before setting restock preferences.")
+    stock.low_stock_threshold = payload.low_stock_threshold
+    stock.refill_quantity = payload.refill_quantity
+    session.flush()
+    return PantryStockResponse.model_validate(stock)
 
 
 def set_pantry_tracking(

@@ -191,7 +191,15 @@ class IngredientPage(ApiModel):
     offset: int
 
 
+class PantryPreferencesUpdate(ApiModel):
+    measurement_family: MeasurementFamily
+    low_stock_threshold: Decimal | None = Field(default=None, ge=0, max_digits=15, decimal_places=3)
+    refill_quantity: Decimal | None = Field(default=None, ge=0, max_digits=15, decimal_places=3)
+
+
 class PantryStockResponse(ApiModel):
+    low_stock_threshold: SerializedDecimal | None
+    refill_quantity: SerializedDecimal | None
     id: UUID
     ingredient_id: UUID
     quantity: SerializedDecimal

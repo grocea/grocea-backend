@@ -142,7 +142,11 @@ class Ingredient(TimestampMixin, Base):
 
 class PantryStock(TimestampMixin, Base):
     __tablename__ = "pantry_stocks"
-    __table_args__ = (UniqueConstraint("user_id", "ingredient_id", name="uq_pantry_stocks_user_ingredient"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "ingredient_id", name="uq_pantry_stocks_user_ingredient"),
+        CheckConstraint("low_stock_threshold >= 0", name="low_stock_threshold_nonnegative"),
+        CheckConstraint("refill_quantity >= 0", name="refill_quantity_nonnegative"),
+    )
 
     id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(
@@ -152,6 +156,8 @@ class PantryStock(TimestampMixin, Base):
         PostgreSQLUUID(as_uuid=True), ForeignKey("ingredients.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     quantity: Mapped[Decimal] = mapped_column(Numeric(15, 3), nullable=False, server_default="0.000")
+    low_stock_threshold: Mapped[Decimal | None] = mapped_column(Numeric(15, 3), nullable=True)
+    refill_quantity: Mapped[Decimal | None] = mapped_column(Numeric(15, 3), nullable=True)
 
 
 class Recipe(TimestampMixin, Base):
