@@ -19,6 +19,7 @@ from grocea.full_services import (
     cook_recipe,
     create_grocery_list_from_basket,
     create_grocery_list_item,
+    create_manual_grocery_list,
     create_recipe,
     delete_grocery_list,
     get_grocery_list_model,
@@ -67,6 +68,7 @@ from grocea.schemas import (
     IngredientUpdate,
     LocalImportRequest,
     LocalImportResponse,
+    ManualGroceryListCreate,
     PantryStockResponse,
     PantryTrackingUpdate,
     ProfileResponse,
@@ -543,6 +545,25 @@ def delete_basket(
         "basket.clear",
         BasketResponse,
         lambda: clear_basket(session, user),
+    )
+
+
+@router.post(
+    "/grocery-lists",
+    response_model=GroceryListResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["grocery-lists"],
+)
+def post_manual_grocery_list(
+    payload: ManualGroceryListCreate,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> GroceryListResponse:
+    return apply_mutation(
+        session, user, mutation, response, "grocery-list.manual.create", GroceryListResponse,
+        lambda: create_manual_grocery_list(session, user, payload),
     )
 
 

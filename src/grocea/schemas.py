@@ -309,6 +309,11 @@ class GroceryListPantryBasis(ApiModel):
     quantity: Decimal = Field(max_digits=15, decimal_places=3)
 
 
+class ManualGroceryListCreate(ApiModel):
+    id: UUID
+    title: Name = "Shopping list"
+
+
 class GroceryListCreate(ApiModel):
     id: UUID
     title: Name | None = None
@@ -339,6 +344,7 @@ class GroceryListItemCreate(ApiModel):
     label: Name
     quantity: Decimal | None = Field(default=None, gt=0, max_digits=15, decimal_places=3)
     unit: str | None = Field(default=None, max_length=40)
+    prevent_duplicate_ingredient: bool = False
 
     @model_validator(mode="after")
     def validate_amount_unit(self) -> Self:

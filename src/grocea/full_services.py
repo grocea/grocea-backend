@@ -44,6 +44,7 @@ from grocea.schemas import (
     ImportConflict,
     LocalImportRequest,
     LocalImportResponse,
+    ManualGroceryListCreate,
     MeasurementFamily,
     PantryStockResponse,
     RecipeCreate,
@@ -344,6 +345,24 @@ def list_grocery_lists(session: Session, user: User) -> list[GroceryListResponse
     return [grocery_list_response(session, row) for row in rows]
 
 
+def create_manual_grocery_list(
+    session: Session,
+    user: User,
+    payload: ManualGroceryListCreate,
+) -> GroceryListResponse:
+    if session.get(GroceryList, payload.id) is not None:
+        raise DomainError(409, "GROCERY_LIST_ID_EXISTS", "Grocery List ID already exists.")
+    active = session.scalar(
+        select(GroceryList.id).where(GroceryList.user_id == user.id, GroceryList.status == GroceryListStatus.ACTIVE)
+    )
+    if active is not None:
+        raise DomainError(409, "ACTIVE_GROCERY_LIST_EXISTS", "Complete or delete the active Grocery List first.")
+    grocery_list = GroceryList(id=payload.id, user_id=user.id, title=payload.title, status=GroceryListStatus.ACTIVE)
+    session.add(grocery_list)
+    session.flush()
+    return grocery_list_response(session, grocery_list)
+
+
 def create_grocery_list_from_basket(
     session: Session,
     user: User,
@@ -572,6 +591,17 @@ def create_grocery_list_item(
     payload: GroceryListItemCreate,
 ) -> GroceryListResponse:
     grocery_list = _require_active_grocery_list(session, user, grocery_list_id)
+    if payload.prevent_duplicate_ingredient and payload.ingredient_id is not None:
+        existing = session.scalar(
+            select(GroceryListItem.id).where(
+                GroceryListItem.grocery_list_id == grocery_list.id,
+                GroceryListItem.ingredient_id == payload.ingredient_id,
+            ).limit(1)
+        )
+        if existing is not None:
+            raise DomainError(
+                409, "GROCERY_INGREDIENT_ALREADY_LISTED", "This ingredient is already on the shopping list."
+            )
     if session.get(GroceryListItem, payload.id) is not None:
         raise DomainError(409, "GROCERY_LIST_ITEM_ID_EXISTS", "Grocery List Item ID already exists.")
     ingredient_id, label, category, family, quantity, unit = _grocery_item_values(
