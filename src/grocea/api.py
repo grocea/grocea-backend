@@ -14,6 +14,7 @@ from grocea.errors import DomainError
 from grocea.full_services import (
     activity_response,
     adjust_stock,
+    bulk_adjust_stock,
     clear_basket,
     complete_grocery_list,
     cook_recipe,
@@ -50,6 +51,7 @@ from grocea.schemas import (
     ActivityResponse,
     BasketItemUpsert,
     BasketResponse,
+    BulkStockCreate,
     CategoryCreate,
     CategoryResponse,
     CategoryUpdate,
@@ -489,6 +491,23 @@ def post_stock_operation(
         ActivityResponse,
         lambda: adjust_stock(session, user, ingredient_id, payload),
     )
+
+
+@router.post("/pantry-stocks/bulk", response_model=ActivityResponse,
+             status_code=status.HTTP_201_CREATED, tags=["pantry"])
+def post_bulk_stock(
+    payload: BulkStockCreate,
+    session: DbSession,
+    user: CurrentUser,
+    mutation: MutationRequest,
+    response: Response,
+) -> ActivityResponse:
+    if mutation.expected_state_revision is None:
+        raise DomainError(
+            422, "STATE_REVISION_REQUIRED", "Review the current pantry revision before saving a bulk update.",
+        )
+    return apply_mutation(session, user, mutation, response, "stock.bulk", ActivityResponse,
+                          lambda: bulk_adjust_stock(session, user, payload))
 
 
 @router.put("/basket/recipes/{recipe_id}", response_model=BasketResponse, tags=["basket"])

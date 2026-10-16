@@ -30,6 +30,7 @@ from grocea.schemas import (
     BasketItemResponse,
     BasketItemUpsert,
     BasketResponse,
+    BulkStockCreate,
     CookRecipeCreate,
     GroceryListComplete,
     GroceryListCreate,
@@ -1017,6 +1018,54 @@ def adjust_stock(
     session.add(event)
     session.flush()
     session.add(StockChange(event_id=event.id, ingredient_id=ingredient_id, before=before, delta=delta, after=after))
+    session.flush()
+    return activity_response(session, event)
+
+
+def bulk_adjust_stock(session: Session, user: User, payload: BulkStockCreate) -> ActivityResponse:
+    # Validate every row before creating stock or history. The account lock in apply_mutation
+    # serializes all pantry writes and the surrounding session rolls back on any error.
+    maximum = Decimal("999999999999.999")
+    prepared: list[tuple[UUID, PantryStock | None, Decimal, Decimal]] = []
+    for row in payload.rows:
+        ingredient = session.scalar(select(Ingredient).where(
+            Ingredient.id == row.ingredient_id,
+            or_(Ingredient.user_id.is_(None), Ingredient.user_id == user.id),
+            Ingredient.archived_at.is_(None),
+        ))
+        if ingredient is None:
+            raise DomainError(404, "INGREDIENT_NOT_FOUND", "An ingredient was not found.")
+        if row.unit not in FAMILY_UNITS[ingredient.measurement_family]:
+            raise DomainError(422, "UNIT_FAMILY_MISMATCH", "Choose a compatible unit for every ingredient.")
+        amount = Decimal(row.amount) * UNIT_FACTORS[row.unit] * row.pack_count
+        if amount != amount.quantize(THREE_PLACES):
+            raise DomainError(422, "QUANTITY_PRECISION", "Every amount must be exact to 0.001 canonical units.")
+        if amount < 0 or (row.operation == "add" and amount == 0) or amount > maximum:
+            raise DomainError(422, "QUANTITY_RANGE", "A bulk amount is outside the supported range.")
+        stock = session.scalar(select(PantryStock).where(
+            PantryStock.user_id == user.id, PantryStock.ingredient_id == row.ingredient_id,
+        ).with_for_update())
+        before = stock.quantity if stock is not None else Decimal("0.000")
+        after = amount if row.operation == "set" else before + amount
+        if abs(after) > maximum or abs(after - before) > maximum:
+            raise DomainError(422, "QUANTITY_RANGE", "A resulting balance or change is outside the supported range.")
+        prepared.append((row.ingredient_id, stock, before, after))
+    if session.get(ActivityEvent, payload.event_id) is not None:
+        raise DomainError(409, "ACTIVITY_ID_REUSED", "This activity identifier has already been used.")
+    noun = "ingredient" if len(prepared) == 1 else "ingredients"
+    event = ActivityEvent(id=payload.event_id, user_id=user.id, event_type="manual",
+                          title=f"Updated {len(prepared)} pantry {noun}",
+                          detail=payload.reason.strip() or "Bulk pantry update")
+    session.add(event)
+    session.flush()
+    for ingredient_id, stock, before, after in prepared:
+        if stock is None:
+            stock = PantryStock(user_id=user.id, ingredient_id=ingredient_id, quantity=after)
+            session.add(stock)
+        else:
+            stock.quantity = after
+        session.add(StockChange(event_id=event.id, ingredient_id=ingredient_id,
+                                before=before, delta=after - before, after=after))
     session.flush()
     return activity_response(session, event)
 

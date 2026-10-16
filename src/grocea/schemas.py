@@ -216,6 +216,26 @@ class StockOperationCreate(ApiModel):
         return self
 
 
+class BulkStockRow(ApiModel):
+    ingredient_id: UUID
+    operation: Literal["add", "set"]
+    amount: str = Field(pattern=r"^\d{1,12}(?:\.\d{1,6})?$", max_length=19)
+    unit: Unit
+    pack_count: int = Field(default=1, ge=1, le=1000000, strict=True)
+
+
+class BulkStockCreate(ApiModel):
+    event_id: UUID
+    rows: list[BulkStockRow] = Field(min_length=1, max_length=100)
+    reason: str = Field(default="Bulk pantry update", max_length=500)
+
+    @model_validator(mode="after")
+    def unique_ingredients(self) -> Self:
+        if len({row.ingredient_id for row in self.rows}) != len(self.rows):
+            raise ValueError("Each ingredient can appear only once in a bulk update.")
+        return self
+
+
 class RecipeIngredientWrite(ApiModel):
     ingredient_id: UUID
     quantity: str = Field(default="", max_length=64)
