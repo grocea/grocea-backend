@@ -504,3 +504,31 @@ class ErrorResponse(ApiModel):
 
 class HealthResponse(ApiModel):
     status: Literal["ok"] = "ok"
+
+
+class PasswordResetRequest(ApiModel):
+    email: EmailAddress
+
+
+class PasswordResetConfirm(ApiModel):
+    token: Annotated[str, StringConstraints(max_length=128)]
+    new_password: Password
+
+
+class RecoveryResponse(ApiModel):
+    message: str
+
+
+class AccountDeleteRequest(ApiModel):
+    current_password: LoginPassword
+    confirmation: Literal["DELETE"]
+
+
+class AccountExportResponse(ApiModel):
+    format: Literal["grocea-account-export"] = "grocea-account-export"
+    version: Literal[1] = 1
+    exported_at: datetime
+    state_revision: int
+    source: Literal["server"] = "server"
+    restore_supported: Literal[False] = False
+    data: dict[str, list[dict[str, object]]]

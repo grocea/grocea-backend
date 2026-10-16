@@ -55,6 +55,7 @@ def create_app() -> FastAPI:
             "Idempotency-Key",
             "X-Device-ID",
             "X-CSRF-Token",
+            "X-Account-ID",
             "X-Expected-State-Revision",
         ],
         expose_headers=["X-Request-ID", "X-State-Revision", "X-Idempotent-Replay"],
@@ -103,6 +104,8 @@ def create_app() -> FastAPI:
 
     if is_local:
         application.include_router(developer_router)
+    from grocea.account_api import router as account_router
+    application.include_router(account_router)
     application.include_router(auth_router)
     application.include_router(router)
 
@@ -123,6 +126,8 @@ def create_app() -> FastAPI:
             "/api/health/ready",
             "/api/auth/register",
             "/api/auth/login",
+            "/api/auth/password-reset/request",
+            "/api/auth/password-reset/confirm",
         }
         for path, operations in schema.get("paths", {}).items():
             if path in public_paths:

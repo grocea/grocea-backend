@@ -118,3 +118,21 @@ PWA synchronization.
 
 Quantities cross API as decimal strings with exactly three fractional digits.
 Canonical base units are grams, millilitres, and items.
+
+### Password recovery and account data controls
+
+`POST /api/auth/password-reset/request` accepts an email and returns the same generic 202 for known, unknown and address-throttled requests. An unconfigured recovery transport returns a universal 503. Accepted requests are not a delivery guarantee. Configure `PUBLIC_APP_ORIGIN`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY` (`starttls` or `ssl`), `SMTP_FROM`, paired `SMTP_USERNAME`/`SMTP_PASSWORD` if needed, and a stable secret `RECOVERY_THROTTLE_SECRET`. HTTPS and encrypted SMTP are required outside local/test; plain SMTP is allowed only to loopback in local/test. Never enable SMTP debug output. `SMTP_TIMEOUT_SECONDS` bounds individual blocking SMTP operations, not a complete DNS/network sequence.
+
+`RESET_TOKEN_MINUTES` defaults to 30; `RESET_REQUESTS_PER_HOUR` defaults to 5 with a separate 60-second address cooldown and IP/confirmation limits. Throttles live in PostgreSQL across processes; expired rows are pruned in bounded batches. Only token hashes are stored. Links use `/reset-password#token=...` at the configured trusted origin. Confirmation revokes every account session/reset token and requires normal sign-in; a notification is sent using the same SMTP transport after commit. No password or bearer token belongs in logs, reports or JSON exports.
+
+Delivery uses a real FastAPI post-response SMTP task. Tasks are process-local and not a durable queue: a process interruption may require another request. Production host task lifetime, credentials, sender authorization and actual inbox delivery must be verified before release. Socket timeouts/failure do not turn the generic request into a recipient-existence leak; operational warnings are redacted. No new external provider is used.
+
+Authenticated `GET /api/account/export` returns an allowlisted version1 JSON snapshot of owned kitchen data, archived records, exact decimal quantities, historical grocery snapshots and shared catalog context. It excludes passwords, sessions, CSRF, reset/throttle records and mutation replay bodies. This is an export, not a restore format. `DELETE /api/account` requires current password, CSRF and literal `confirmation: "DELETE"`; teardown is transactional and preserves global/other-account data. Inconsistent cross-account references block deletion without partial changes. User-row locking and post-lock session validation serialize reset/login/deletion/kitchen writes, including cached mutation replay.
+
+Local verification (explicit disposable loopback database only):
+
+```sh
+APP_ENV=local DATABASE_URL=postgresql+psycopg://127.0.0.1:5432/grocea_next_phase_20261016 PYTHONPATH=src /path/to/python tools/verify_account.py --serve
+```
+
+The script starts the local API 8000, a real SMTP receiver 8025 and a private fixture control 8030. It logs only redacted pass/fail results, and `--serve` retains the generated browser fixture until interrupted; Ctrl-C stops its API/SMTP. The private fixture endpoint exists only in this verification script and never in the application. Do not bind it externally. Migration 0006 adds recovery tokens/throttles; downgrade discards recovery state only. No remote migration or mail send is part of local verification.

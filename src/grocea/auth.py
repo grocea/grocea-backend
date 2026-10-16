@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from grocea.config import get_settings
 from grocea.constants import LOCAL_USER_ID
 from grocea.errors import DomainError
-from grocea.models import AuthSession, User
+from grocea.models import AuthSession, PasswordResetToken, User
 
 SESSION_COOKIE_NAME = "grocea_session"
 SESSION_TTL = timedelta(days=30)
@@ -116,7 +116,12 @@ def create_account(
 
 def authenticate(session: Session, *, email: str, password: str) -> tuple[User, IssuedSession]:
     canonical = normalize_email(email)
-    user = session.scalar(select(User).where(User.normalized_email == canonical))
+    user = session.scalar(
+        select(User)
+        .where(User.normalized_email == canonical)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     stored_hash = user.password_hash if user is not None and user.password_hash is not None else DUMMY_PASSWORD_HASH
     valid, replacement = _verify_password(password, stored_hash)
     if not valid or user is None:
@@ -127,7 +132,7 @@ def authenticate(session: Session, *, email: str, password: str) -> tuple[User, 
 
 
 def resolve_session(session: Session, token: str | None) -> tuple[User, AuthSession] | None:
-    if not token:
+    if not token or not token.isascii() or len(token) > 128:
         return None
     auth_session = session.scalar(select(AuthSession).where(AuthSession.token_hash == _token_hash(token)))
     if auth_session is None or auth_session.expires_at <= _now():
@@ -146,6 +151,7 @@ def change_password(session: Session, user: User, *, current_password: str, new_
     if not valid:
         raise DomainError(401, "INVALID_CREDENTIALS", "Current password is incorrect.")
     user.password_hash = password_hash.hash(new_password)
+    session.execute(delete(PasswordResetToken).where(PasswordResetToken.user_id == user.id))
     session.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
     return _new_session(session, user)
 

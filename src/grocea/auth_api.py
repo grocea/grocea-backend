@@ -1,10 +1,20 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime
 
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Request, Response, status
 from sqlalchemy.exc import IntegrityError
 
+from grocea.account import (
+    RECOVERY_MESSAGE,
+    deliver_reset,
+    issue_reset,
+    notify_password_changed,
+    recovery_settings,
+    reset_password,
+    throttle,
+)
 from grocea.auth import (
     SESSION_COOKIE_NAME,
     IssuedSession,
@@ -13,6 +23,7 @@ from grocea.auth import (
     cookie_samesite,
     cookie_secure,
     create_account,
+    normalize_email,
     revoke_session,
     session_max_age,
 )
@@ -26,6 +37,9 @@ from grocea.schemas import (
     AuthRegisterRequest,
     AuthSessionResponse,
     ErrorResponse,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    RecoveryResponse,
 )
 
 router = APIRouter(
@@ -135,3 +149,48 @@ def update_password(
     _set_session_cookie(response, issued.token, issued.expires_at)
     _no_store(response)
     return _session_response(auth.user, issued)
+
+
+@router.post("/password-reset/request", response_model=RecoveryResponse, status_code=202)
+def request_password_reset(
+    payload: PasswordResetRequest,
+    request: Request,
+    response: Response,
+    session: DbSession,
+    background_tasks: BackgroundTasks,
+) -> RecoveryResponse:
+    validate_origin(request)
+    started = time.monotonic()
+    settings = recovery_settings()  # same failure for every address
+    canonical = normalize_email(str(payload.email))
+    peer = request.client.host if request.client else "unknown"
+    ip_allowed = throttle(session, "request-ip", peer, 30, 3600)
+    address_allowed = throttle(session, "request-email", canonical, settings.reset_requests_per_hour, 3600)
+    cooldown_allowed = throttle(session, "request-cooldown", canonical, 1, 60)
+    if ip_allowed and address_allowed and cooldown_allowed:
+        issued = issue_reset(session, canonical)
+        if issued:
+            background_tasks.add_task(deliver_reset, *issued)
+    _no_store(response)
+    time.sleep(max(0, 0.15 - (time.monotonic() - started)))
+    return RecoveryResponse(message=RECOVERY_MESSAGE)
+
+
+@router.post("/password-reset/confirm", status_code=204)
+def confirm_password_reset(
+    payload: PasswordResetConfirm,
+    request: Request,
+    response: Response,
+    session: DbSession,
+    background_tasks: BackgroundTasks,
+) -> Response:
+    validate_origin(request)
+    peer = request.client.host if request.client else "unknown"
+    if not throttle(session, "confirm-ip", peer, 60, 3600):
+        raise DomainError(429, "RECOVERY_RATE_LIMITED", "Too many attempts. Try again later.")
+    recipient = reset_password(session, payload.token, payload.new_password)
+    background_tasks.add_task(notify_password_changed, recipient)
+    _clear_session_cookie(response)
+    _no_store(response)
+    response.status_code = 204
+    return response
